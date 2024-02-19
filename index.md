@@ -52,7 +52,7 @@ Students new to **R** should complete a [tutorial](https://kingaa.github.io/R_Tu
 
 [**0. Instructions for preparing your computer for the course exercises.**](./prep/index.html)
 
-[**1. Introduction: What is "Simulation-based Inference for Epidemiological Dynamics"?  POMPs and pomp.**](./intro/index.html)
+[**1. Introduction: Partially observed Markov processes and simulation-based inference.**](./intro/index.html)
 
 [**2. Simulation of stochastic dynamic models.**](./stochsim/index.html)
 
