@@ -1,6 +1,5 @@
 ---
-title: Simulation-based Inference for Epidemiological Dynamics
-author: Aaron A. King, Edward L. Ionides, Jesse Wheeler
+title: Inference for Disease Dynamics
 output:
   html_document:
     includes:
@@ -51,7 +50,7 @@ Students new to **R** should complete a [tutorial](https://kingaa.github.io/R_Tu
 
 ## Lessons
 
-[**0. Instructions for preparing your laptop for the course exercises.**](./prep/index.html)
+[**0. Instructions for preparing your computer for the course exercises.**](./prep/index.html)
 
 [**1. Introduction: What is "Simulation-based Inference for Epidemiological Dynamics"?  POMPs and pomp.**](./intro/index.html)
 
@@ -63,10 +62,6 @@ Students new to **R** should complete a [tutorial](https://kingaa.github.io/R_Tu
 
 [**5. Case study: measles.  Recurrent epidemics, long time series, covariates, extra-demographic stochasticity, interpretation of parameter estimates.**](./measles/index.html)
 
-[**6. Case study: polio. Workflow for a real research problem.**](./polio/index.html)
-
-[**7. Case study: Ebola. Model diagnostics and forecasting.**](./ebola/index.html)
-
-[**8. Case study: HIV and fluctuating sexual contact rates. Panel data.**](./contacts/index.html)
+[**6. Case study: Ebola. Model diagnostics and forecasting.**](./ebola/index.html)
 
 [**Miscellaneous materials**](./misc/index.html)

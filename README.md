@@ -55,10 +55,7 @@ legacy platforms:
     -   pfilter: Lesson 3
     -   mif: Lesson 4
     -   measles: Lesson 5
-    -   polio: Lesson 6
     -   ebola: Lesson 7
-    -   contacts: Lesson 8
-    -   od: Lesson from an earlier version of the course
     -   misc: Miscellaneous lessons
     -   \_includes: latex, HTML, **R** files included in other files
     -   graphics: figures in various formats
@@ -102,39 +99,9 @@ and the time required for their computation on a linux cluster with
 <td style="text-align: right;">67.6</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">polio/results</td>
-<td style="text-align: right;">41687</td>
-<td style="text-align: right;">65.6</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">polio/initial-values-exercise/results</td>
-<td style="text-align: right;">41635</td>
-<td style="text-align: right;">64.3</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">polio/starting-values-exercise/results</td>
-<td style="text-align: right;">41687</td>
-<td style="text-align: right;">64.2</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">contacts/results</td>
-<td style="text-align: right;">206</td>
-<td style="text-align: right;">13.7</td>
-</tr>
-<tr class="odd">
 <td style="text-align: left;">pfilter/results</td>
 <td style="text-align: right;">142</td>
 <td style="text-align: right;">13.2</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">polio/runlevel2/results</td>
-<td style="text-align: right;">3266</td>
-<td style="text-align: right;">4.8</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">polio/runlevel1/results</td>
-<td style="text-align: right;">612</td>
-<td style="text-align: right;">0.8</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ebola/results</td>
@@ -144,12 +111,12 @@ and the time required for their computation on a linux cluster with
 </tbody>
 </table>
 
-The archives amount to about 131 MB. About 126 MB of this is associated
-with the polio lesson, in which large amounts of redundant information
-are stored.
+The archives amount to about 5 MB. About 0 MB of this is associated with
+the polio lesson, in which large amounts of redundant information are
+stored.
 
 Full compilation, i.e., rebuilding the complete set of materials
-following deletion of all archives, requires about 534 min on a
+following deletion of all archives, requires about 320 min on a
 250-processor cluster. Full compilation regenerates the complete set of
 archives. A finishing compilation, i.e., rebuilding with all archives in
 place, but with the re-Making of all documents, requires about 12 min on

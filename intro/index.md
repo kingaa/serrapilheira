@@ -1,6 +1,6 @@
 ---
-title: "Lesson 1: Introduction to Simulation-based Inference for Epidemiological Dynamics"
-author: Aaron A. King, Edward L. Ionides, Jesse Wheeler
+title: |
+  Introduction to Simulation-based Inference for Epidemiological Dynamics
 output:
   html_document:
     includes:

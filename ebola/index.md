@@ -1,6 +1,6 @@
 ---
-title: "Lesson 7: Case study: Ebola, model diagnostics, and forecasting"
-author: Aaron A. King, Edward L. Ionides, Jesse Wheeler
+title: |
+  Case study: Ebola, model diagnostics, and forecasting
 output:
   html_document:
     includes:

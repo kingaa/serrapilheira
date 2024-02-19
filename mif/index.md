@@ -1,6 +1,6 @@
 ---
-title: "Lesson 4: Iterated filtering: principles and practice"
-author: Aaron A. King, Edward L. Ionides, Jesse Wheeler
+title: |
+  Iterated filtering: principles and practice
 output:
   html_document:
     includes:

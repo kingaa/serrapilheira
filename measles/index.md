@@ -1,6 +1,6 @@
 ---
-title: "Lesson 5: Case study: Recurrent measles dynamics revealed in long time series"
-author: Aaron A. King, Edward L. Ionides, Jesse Wheeler
+title: |
+  Case study: Recurrent measles dynamics revealed in long time series
 output:
   html_document:
     includes:

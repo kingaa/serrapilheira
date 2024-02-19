@@ -1,7 +1,6 @@
 ---
 title: |
-  Lesson 3:  Likelihood for POMPs: theory and practice
-author: Aaron A. King, Edward L. Ionides, Jesse Wheeler
+  Likelihood for POMPs: theory and practice
 output:
   html_document:
     includes:

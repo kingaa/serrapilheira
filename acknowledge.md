@@ -1,6 +1,6 @@
 ---
-title: "Simulation-based Inference for Epidemiological Dynamics"
-subtitle: "Acknowledgements"
+title: Inference for Disease Dynamics
+subtitle: Acknowledgements
 output:
   html_document:
     includes:
@@ -12,7 +12,7 @@ csl: jss.csl
 
 ---------------------
 
-- Versions of this course have been presented at the [Summer Institute in Statistics and Modeling in Infectious Diseases](https://www.biostat.washington.edu/suminst/sismid/) by Edward Ionides and Aaron King each year from 2015 to 2023.
+- These materials are based on a short-course offered under the auspices the [Summer Institute in Statistics and Modeling in Infectious Diseases](https://www.biostat.washington.edu/suminst/sismid/) by Edward Ionides and Aaron King each year from 2015 to 2023.
 
 - Carles Bret&oacute; assisted in 2018.
 
