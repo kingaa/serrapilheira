@@ -1,0 +1,1327 @@
+\input{header}
+
+\usepackage{tikz}
+\usetikzlibrary {arrows.meta} % for tikz stealth arrow style
+\usetikzlibrary{shapes.geometric} % for tikz diamond nodes, etc
+
+\def\CHAPTER{4}
+\title{Lesson \CHAPTER.\\Iterated filtering: principles and practice}
+\author{Aaron A. King and Edward L. Ionides}
+
+\begin{document}
+
+% knitr set up
+<<knitr_opts,include=FALSE,cache=FALSE,purl=FALSE>>=
+source("../_includes/setup.R", local = knitr::knit_global())
+@
+
+<<prelims,echo=F,cache=F>>=
+library(tidyverse)
+library(pomp)
+set.seed(1350254336)
+@
+
+\maketitle
+
+\mode<article>{\tableofcontents}
+
+\mode<presentation>{
+  \begin{frame}{Outline}
+    \tableofcontents
+  \end{frame}
+}
+
+\section{Introduction}
+
+\begin{frame}{Introduction}
+  \begin{itemize}
+  \item This tutorial covers likelihood estimation via the method of iterated filtering.
+  \item It presupposes familiarity with building partially observed Markov process (POMP) objects in the \Rlanguage package \pkg{pomp} \citep{King2016}. 
+  \item This tutorial follows on from the \link{../pfilter/slides.pdf}{topic of particle filtering} (also known as sequential Monte Carlo) via \code{pfilter} in \pkg{pomp}. 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Objectives}
+  \begin{enumerate}
+  \item To review the available options for inference on POMP models, to put iterated filtering in context.
+  \item To understand how iterated filtering algorithms carry out repeated particle filtering operations, with randomly perturbed parameter values, in order to maximize the likelihood.
+  \item To gain experience carrying out statistical investigations using iterated filtering in a relatively simple situation: fitting an SIR model to data from a measles outbreak.
+  \end{enumerate}
+\end{frame}
+
+\AtBeginSection[]{
+  \begin{frame}<beamer>
+    \frametitle{Outline}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\section{Classification of statistical methods for POMP models}
+
+\begin{frame}{Classification of statistical methods for POMP models}
+  \begin{itemize}
+  \item Many, many statistical methods have been proposed for inference on POMP models \citep{He2010,King2016}.
+  \item The volume of research indicates both the importance and the difficulty of the problem.
+  \item Let's start by considering three criteria to categorize inference methods:
+    \begin{itemize}
+    \item the plug-and-play property
+    \item full-information or feature-based
+    \item frequentist or Bayesian
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\subsection*{The plug-and-play property}
+
+\begin{frame}[allowframebreaks=0.7]{Plug-and-play (also called simulation-based) methods}
+  \begin{itemize}
+  \item Inference methodology that calls \code{rprocess} but not \code{dprocess} is said to be \emph{plug-and-play}.
+    All popular modern Monte Carlo methods for POMP models are in this category. 
+  \item ``Simulation-based'' is equivalent to ``plug-and-play''. 
+  \item Historically, simulation-based meant simulating forward from initial conditions to the end of the time series. 
+  \item However, particle filtering methods instead consider each observation interval sequentially.
+    They carry out multiple, carefully selected, simulations over each interval.
+  \item Plug-and-play methods can call \code{dmeasure}.
+    A method that uses only \code{rprocess} and \code{rmeasure} is called ``doubly plug-and-play''.
+  \item Two \emph{non-plug-and-play} methods---expectation-maximization (EM) and Markov chain Monte Carlo (MCMC)---have theoretical convergence problems for nonlinear POMP models.
+    The failures of these two workhorses of statistical computation have prompted development of alternative methodologies.
+  \end{itemize}
+\end{frame}
+
+\subsection*{Full information vs.~feature-based methods}
+
+\begin{frame}[allowframebreaks=0.7]
+  \frametitle{Full-information and feature-based methods}  
+  \begin{itemize}
+  \item \emph{Full-information} methods are defined to be those based on the likelihood function for the full data (i.e., likelihood-based frequentist inference and Bayesian inference).
+  \item \emph{Feature-based} methods either consider a summary statistic (a function of the data) or work with an an alternative to the likelihood.
+  \item Asymptotically, full-information methods are statistically efficient and feature-based methods are not.
+  \item In some cases, loss of statistical efficiency might be an acceptable tradeoff for advantages in computational efficiency.
+  \item However:
+    \begin{itemize}
+    \item Good low-dimensional summary statistics can be hard to find. 
+    \item When using statistically inefficient methods, it can be hard to know how much information you are losing. 
+    \item Intuition and scientific reasoning can be inadequate tools to derive informative low-dimensional summary statistics \citep{Shrestha2011,Ionides2011a}.
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\subsection*{Bayesian vs.~frequentist approaches}
+
+\begin{frame}[allowframebreaks=0.7]
+  \frametitle{Bayesian and frequentist methods}
+  \begin{itemize}
+  \item Recently, plug-and-play Bayesian methods have been discovered:
+    \begin{itemize}
+    \item particle Markov chain Monte Carlo (PMCMC) \citep{Andrieu2010}.
+    \item  approximate Bayesian computation (ABC) \citep{Toni2009}.
+    \end{itemize}
+  \item Prior belief specification is both the strength and weakness of Bayesian methodology:
+  \item The likelihood surface for nonlinear POMP models often contains nonlinear ridges and variations in curvature. 
+  \item These situations bring into question the appropriateness of independent priors derived from expert opinion on marginal distributions of parameters.
+  \item They also are problematic for specification of ``flat'' or ``uninformative'' prior beliefs.
+  \item Expert opinion can be treated as data for non-Bayesian analysis.
+    However, our primary task is to identify the information in the data under investigation, so it can be helpful to use methods that do not force us to make our conclusions dependent on quantification of prior beliefs.
+  \end{itemize}
+\end{frame}
+
+\subsection*{Summary}
+
+\begin{frame}
+  \frametitle{POMP inference methodologies}
+  \begin{tabular}{| l | l | l |}
+    \hline\hline
+    &Frequentist &Bayesian\\
+    \hline
+    \multicolumn{3}{| c |}{Plug-and-play}\\
+    \hline
+    Full-information & iterated filtering &particle MCMC\\
+    \hline
+    Feature-based &simulated moments &ABC\\
+    &synthetic likelihood (SL) &SL-based MCMC\\
+    &nonlinear forecasting &\\
+    \hline
+    \multicolumn{3}{| c |}{Not plug-and-play}\\
+    \hline
+    Full-information & EM algorithm &MCMC\\
+    &Kalman filter & \\
+    \hline
+    Feature-based & Yule-Walker\footnote{Yule-Walker is a method of moments for ARMA, a linear Gaussian POMP.} &extended Kalman filter\footnote{The Kalman filter gives the exact likelihood for a linear Gaussian POMP. The extended Kalman filter gives an approximation for nonlinear models that can be used for quasi-likelihood or quasi-Bayesian inference.\label{fn:kf}}\\
+    &extended Kalman filter\textsuperscript{\ref{fn:kf}} & \\
+    \hline\hline
+  \end{tabular}
+\end{frame}
+
+\section{Iterated filtering in theory}
+
+\begin{frame}{Full-information, plug-and-play, frequentist methods}
+  \begin{itemize}
+  \item Iterated filtering methods \citep{Ionides2006,Ionides2015} are the only currently available, full-information, plug-and-play, frequentist methods for POMP models.
+  \item Iterated filtering methods have been shown to solve likelihood-based inference problems for epidemiological situations which are computationally intractable for available Bayesian methodology \citep{Ionides2015}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{An iterated filtering algorithm (IF2)}
+
+  We focus on the IF2 algorithm of \citet{Ionides2015}.
+  In this algorithm:
+
+  \begin{itemize}
+  \item Each iteration consists of a particle filter, carried out with the parameter vector, for each particle, doing a random walk.
+  \item At the end of the time series, the collection of parameter vectors is recycled as starting parameters for the next iteration.
+  \item The random-walk variance decreases at each iteration.
+  \end{itemize}
+
+  In theory, this procedure converges toward the region of parameter space maximizing the maximum likelihood.  
+  In practice, we can test this claim on examples.
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\resizebox{10cm}{!}{
+\begin{tikzpicture}[
+  square/.style={rectangle, draw=black, minimum width=4.2cm, minimum height=0.7cm, rounded corners=.1cm,font=\ttfamily},
+  >/.style={shorten >=0.4mm}, % redefine arrow to stop short of node
+  >/.tip={Stealth[length=2.5mm,width=1.5mm]} % redefine arrow style
+]
+  \tikzset{>={}}; % this is needed to implement the arrow redefinition
+  \node (ivp) at (0,6) [square,fill=blue!8]{perturb params};
+  \node (initialize)   at (0,4.8)  [square] {initialize: rinit};
+  \node (rp) at (0,3.6) [square,fill=blue!8]{perturb params};
+  \node (predict)  at (0,2.4)  [square] {predict: rprocess};
+  \node (weight)  at (0,1.2)  [square] {weight: dmeasure};
+  \node (filter)  at (0,0)  [square] {resample states};
+  \node (filterParams)  at (0,-1.2)  [square,fill=blue!8] {resample params};  
+  \node (N) at (5.5,1.2)  [draw,diamond,aspect=2] {\texttt{N observations}};
+  \node (Np) at (0,7.5)  [draw,diamond,aspect=2,color=red] {\texttt{Np particles}};
+  \node (Nmif) at (8,4.5)  [draw,diamond,aspect=2,fill=blue!8] {\texttt{Nmif iterations}};
+  \draw[->] (Nmif.north) |- (ivp.east);
+  \draw[->] (filterParams.south) -- (0,-2.3) -| (Nmif.south);
+  \draw[->] (ivp) -- (initialize);
+  \draw[->] (initialize) -- (rp);
+  \draw[->] (rp) -- (predict);
+  \draw[->] (predict) -- (weight);
+  \draw[->] (weight) -- (filter);
+  \draw[->] (filter) -- (filterParams);
+  \draw[->] (filterParams.east) -| (N);
+  \draw[->] (N.north) |- (rp.east);
+  \draw[color=red, rounded corners, thick, dashed] (Np.east) -| (2.9,-2) -- (-2.9,-2) |- (Np.west);
+\end{tikzpicture}
+}
+\end{center}
+\end{frame}
+
+\begin{frame}{IF2 algorithm pseudocode}
+
+  \textbf{Input:}
+  \begin{itemize}
+  \item simulators for $f_{X_0}(x_0;\theta)$ and $f_{X_n|X_{n-1}}(x_n| x_{n-1}; \theta)$\\
+  \item evaluator for $f_{Y_n|X_n}(y_n| x_n;\theta)$\\
+  \item data, $y^*_{1:N}$\\
+  \end{itemize}
+
+  \textbf{Algorithmic parameters and corresponding \texttt{mif2} arguments:}
+  \begin{itemize}
+  \item number of iterations, {\texttt Nmif = }$M$\\
+  \item number of particles, {\texttt Np = }$J$\\
+  \item initial parameter swarm, {\texttt params = }$\{\Theta^0_j, j=1,\dots,J\}$\\
+  \item random walk standard deviation for each parameter, {\texttt rw.sd}, squared to construct a diagonal variance matrix, $V_n$\\
+  \item cooling fraction in 50 iterations, \texttt{cooling.fraction.50 = }$a$\\
+  \end{itemize}
+
+  \textbf{Output:}
+  \begin{itemize}
+  \item final parameter swarm, $\{\Theta^M_j, j=1,\dots,J\}$\\
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{IF2 algorithm pseudocode II}
+  \textbf{Procedure:}
+  \begin{enumerate}
+  \item For $m$ in $1{:}M$
+  \item $\qquad$ $\Theta^{F,m}_{0,j}\sim \normal\big(\Theta^{m-1}_{j},V_0 \, a^{2m/50}\big)$ for $j$ in $1{:} J$
+  \item $\qquad$ $X_{0,j}^{F,m}\sim f_{X_0}(x_0 ; \Theta^{F,m}_{0,j})$ for $j$ in $1{:} J$
+  \item $\qquad$ For $n$ in $1{:} N$
+  \item $\qquad\qquad$       $\Theta^{P,m}_{n,j}\sim \normal\big(\Theta^{F,m}_{n-1,j},V_n \, a^{2m/50}\big)$ for $j$ in $1{:} J$
+  \item $\qquad\qquad$ $X_{n,j}^{P,m}\sim f_{X_n|X_{n-1}}(x_n | X^{F,m}_{n-1,j}; \Theta^{P,m}_{n,j})$ for $j$ in $1{:} J$
+  \item $\qquad\qquad$ $w_{n,j}^m = f_{Y_n|X_n}(y^*_n| X_{n,j}^{P,m} ; \Theta^{P,m}_{n,j})$ for $j$ in $1{:} J$
+  \item $\qquad\qquad$ Draw $k_{1{:}J}$ with $P[k_j=i]=  w_{n,i}^m\Big/\sum_{u=1}^J w_{n,u}^m$
+  \item $\qquad\qquad$ $\Theta^{F,m}_{n,j}=\Theta^{P,m}_{n,k_j}$ and $X^{F,m}_{n,j}=X^{P,m}_{n,k_j}$ for $j$ in $1{:} J$
+  \item $\qquad$ End For
+  \item $\qquad$ Set $\Theta^{m}_{j}=\Theta^{F,m}_{N,j}$ for $j$ in $1{:} J$
+  \item End For
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{IF2 algorithm pseudocode III}
+  \textbf{Remarks:}
+  \begin{itemize}
+  \item The $N$ loop (lines 4 through 10) is a basic particle filter applied to a model with stochastic perturbations to the parameters.
+  \item The $M$ loop repeats this particle filter with decreasing perturbations.
+  \item The superscript $F$ in $\Theta^{F,m}_{n,j}$ and $X^{F,m}_{n,j}$ denote solutions to the \emph{filtering problem}, with the particles $j=1,\dots,J$ providing a Monte Carlo representation of the conditional distribution at time $n$ given data $y^*_{1:n}$ for filtering iteration $m$.
+  \item The superscript $P$ in $\Theta^{P,m}_{n,j}$ and $X^{P,m}_{n,j}$ denote solutions to the \emph{prediction problem}, with the particles $j=1,\dots,J$ providing a Monte Carlo representation of the conditional distribution at time $n$ given data $y^*_{1:n-1}$ for filtering iteration $m$.
+  \item The \emph{weight} $w^m_{n,j}$ gives the likelihood of the data at time $n$ for particle $j$ in filtering iteration $m$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Analogy with evolution by natural selection}
+  \begin{itemize}
+  \item The parameters characterize the \emph{genotype}.
+  \item The swarm of particles is a \emph{population}.
+  \item The likelihood, a measure of the compatibility between the parameters and the data, is the analogue of \emph{fitness}.
+  \item Each successive observation is a new \emph{generation}.
+  \item Since particles reproduce in each generation in proportion to their likelihood, the particle filter acts like \emph{natural selection}.
+  \item The artificial perturbations augment the ``genetic'' variance and therefore correspond to \emph{mutation}.
+  \item IF2 increases the \emph{fitness} of the population of particles.
+  \item However, because our scientific interest focuses on the model without the artificial perturbations, we decrease the intensity of the latter with successive iterations.
+  \end{itemize}
+\end{frame}
+
+\section{Iterated filtering in practice}
+
+\subsection*{An example problem}
+
+\begin{frame}[fragile]
+  \frametitle{Applying IF2 to the Consett measles outbreak}
+
+  Let us apply IF2 to our analysis of the Consett measles outbreak we began to examine in Lessons 2 and 3.
+
+  The following loads the data, \pkg{pomp}, and the stochastic SIR model we constructed there.
+
+  <<model-construct>>=
+  source("https://kingaa.github.io/sbied/pfilter/model.R")
+  @
+  
+  <<dataplot,purl=FALSE,echo=FALSE,dpi=200,out.width="0.7\\textwidth">>=
+  op <- par(mar=c(3,3,0.5,0.5))
+  measSIR |> plot()
+  par(op)
+  @
+  
+  In the earlier lessons, we demonstrated how to test the codes via simulation.
+
+\end{frame}
+
+\begin{frame}[fragile,allowframebreaks=0.95]{Testing the codes: filtering}
+  Before engaging in iterated filtering, it is a good idea to check that the basic particle filter is working since we can't iterate something unless we can run it once!
+  The simulations above check the \code{rprocess} and \code{rmeasure} codes;
+  the particle filter depends on the \code{rprocess} and \code{dmeasure} codes and so is a check of the latter.
+
+  <<init_pfilter>>=
+  measSIR |>
+    pfilter(Np=1000) -> pf
+  @
+  <<init_pfilter_plot,purl=F,dpi=200,out.width="0.7\\textwidth">>=
+  plot(pf)
+  @
+  
+  \vspace{-5mm}
+
+  The above plot shows the data (\code{reports}), along with the \emph{effective sample size} (ESS) of the particle filter (\code{ess}) and the log-likelihood of each observation conditional on the preceding ones (\code{cond.logLik}).
+
+  The ESS is the equivalent number of independent particles.
+  In this case, the ESS appears to be everywhere adequate.
+  
+\end{frame}
+
+\subsection*{Setting up the estimation problem}
+
+\begin{frame}[fragile]{Setting up the estimation problem}
+
+  Let's assume that the population size, $N$, is known accurately.
+  We'll fix that parameter.
+
+  Let's revisit the assumption that the infectious period is 2 weeks, imagining that we have access to the results of household and clinical studies that have concluded that infected patients shed the virus for 3--4~da.
+  We'll use these results to constrain the infectious period in our model to 3.5~da, i.e., $\mu_{IR}=2~\mathrm{wk}^{-1}$. We also fix $k=10$.
+  Later, we can relax our assumptions.
+  
+  <<fixed_params>>=
+  fixed_params <- c(N=38000, mu_IR=2, k=10)
+  coef(measSIR,names(fixed_params)) <- fixed_params
+  @
+  
+  We proceed to estimate $\beta$, $\eta$, and $\rho$.
+\end{frame}
+
+\begin{frame}[fragile,allowframebreaks=0.8]{Parallel computing}
+  It will be helpful to parallelize most of the computations.
+  \link{https://kingaa.github.io/sbied/pfilter/}{Lesson 3} discusses how to accomplish this using \pkg{foreach}.
+
+  <<parallel-setup,cache=FALSE>>=
+  library(foreach)
+  library(doFuture)
+  plan(multisession)
+  @ 
+\end{frame}
+
+\begin{frame}[fragile]{Running a particle filter}
+
+  We proceed to carry out replicated particle filters at an initial guess of $\beta=\Sexpr{coef(measSIR,"Beta")}$, $\eta=\Sexpr{coef(measSIR,"eta")}$, and $\rho=\Sexpr{coef(measSIR,"rho")}$.
+  
+  <<pf2,eval=FALSE,purl=FALSE>>=
+  foreach(i=1:10,.combine=c,
+    .options.future=list(seed=TRUE)
+  ) %dofuture% {
+    measSIR |> pfilter(Np=5000)
+  } -> pf
+
+  pf |> logLik() |> logmeanexp(se=TRUE) -> L_pf
+  L_pf
+  @ 
+  
+  <<pf,echo=FALSE>>=
+  <<pf1>>
+  tic <- Sys.time()
+  <<pf2>>
+  toc <- Sys.time()
+  @
+  
+  In \Sexpr{round(toc-tic,2)} seconds, using \Sexpr{min(nbrOfWorkers(),length(pf))} cores, we obtain an unbiased likelihood estimate of \Sexpr{round(L_pf[1],1)} with a Monte Carlo standard error of \Sexpr{signif(L_pf[2],2)}.
+\end{frame}
+
+\begin{frame}[fragile,allowframebreaks=0.7]{Building up a picture of the likelihood surface}
+
+  \begin{itemize}
+  \item Given a model and a set of data, the likelihood surface is well defined, though it may be difficult to visualize.
+  \item We can develop a progressively more complete picture of this surface by storing likelihood estimates whenever we compute them.
+  \item It is a very good idea to set up a database within which to store the likelihood of every point for which we have an estimated likelihood.
+  \item This will become larger and more complete as our parameter-space search goes on and will be a basis for a variety of explorations.
+  \end{itemize}
+
+  At this point, we've computed the likelihood at a single point.
+  Let's store this point, together with the estimated likelihood and our estimate of the standard error on that likelihood, in a CSV file:
+  <<init_csv,cache=FALSE>>=
+  pf[[1]] |> coef() |> bind_rows() |>
+    bind_cols(loglik=L_pf[1],loglik.se=L_pf[2]) |>
+    write_csv("measles_params.csv")
+  @
+\end{frame}
+
+\subsection*{A local search of the likelihood surface}
+
+\begin{frame}[fragile,allowframebreaks=0.9]{A local search of the likelihood surface}
+  
+  Let's carry out a local search using \code{mif2} around this point in parameter space. 
+
+  \begin{itemize}
+  \item We need to choose the \code{rw.sd} and \code{cooling.fraction.50} algorithmic parameters.
+  \item Since $\beta$ and $\mu_{IR}$ will be estimated on the log scale, and we expect that multiplicative perturbations of these parameters will have roughly similar effects on the likelihood, we'll use a perturbation size of $0.02$, which we imagine will have a small but non-negligible effect.
+  \item For simplicity, we'll use the same perturbation size on $\rho$.
+  \item We fix \code{cooling.fraction.50=0.5}, so that after 50 \code{mif2} iterations, the perturbations are reduced to half their original magnitudes.
+  \end{itemize}
+  
+  <<local_search,eval=FALSE,purl=FALSE>>=
+  foreach(i=1:20,.combine=c,
+    .options.future=list(seed=482947940)
+  ) %dofuture% {
+    measSIR |>
+      mif2(
+        Np=2000, Nmif=50,
+        cooling.fraction.50=0.5,
+        rw.sd=rw_sd(Beta=0.02, rho=0.02, eta=ivp(0.02)),
+        partrans=parameter_trans(log="Beta",logit=c("rho","eta")),
+        paramnames=c("Beta","rho","eta")
+      )
+  } -> mifs_local
+  @ 
+  <<local_search_eval,echo=FALSE>>=
+  ## What is this 'bake' function?
+  ## See https://kingaa.github.io/sbied/pfilter/bake.html
+  ## for an explanation.
+  bake(file="local_search.rds",{
+    <<local_search>>
+    attr(mifs_local,"ncpu") <- nbrOfWorkers()
+    mifs_local
+  }) -> mifs_local
+  t_loc <- attr(mifs_local,"system.time")
+  ncpu_loc <- attr(mifs_local,"ncpu")
+  @
+\end{frame}
+
+\begin{frame}[fragile]{Windows issues}
+  Some Windows users have reported trouble with the above code.
+  This appears to be due to certain Windows security features that make it impossible to compile codes inside a parallel block.
+  We have found a workaround.
+
+  \begin{itemize}
+  \item
+    \link{../misc/windows.html}{This document describes the problem and the workaround.}
+  \item
+    \link{./main_win.R}{A Windows-safe version of the code for this document is available here.}
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}[fragile,allowframebreaks]{Iterated filtering diagnostics}
+  We obtain some diagnostic plots with the \code{plot} command applied to \code{mifs\_local}.
+  Here is a way to get a prettier version:
+  
+  <<local_search_plot,out.width="0.8\\linewidth">>=
+  mifs_local |>
+    traces() |>
+    melt() |>
+    ggplot(aes(x=iteration,y=value,group=.L1,color=factor(.L1)))+
+    geom_line()+
+    guides(color="none")+
+    facet_wrap(~name,scales="free_y")
+  @
+  
+  \framebreak
+
+  \begin{itemize}
+  \item We see that the likelihood increases as the iterations proceed, though there is considerable variability due to
+    \begin{enumerate}[(a)]
+    \item the poorness of our starting guess and
+    \item the stochastic nature of this Monte Carlo algorithm.
+    \end{enumerate}
+  \item We see movement in the parameters, though variability remains.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile,allowframebreaks]{Estimating the likelihood}
+  Although the filtering carried out by \code{mif2} in the final filtering iteration generates an approximation to the likelihood at the resulting point estimate, this is not good enough for reliable inference.
+  \begin{itemize}
+  \item Partly, this is because parameter perturbations are applied in the last filtering iteration, so that the likelihood reported by \code{mif2} is not identical to that of the model of interest.
+  \item Partly, this is because \code{mif2} is usually carried out with fewer particles than are needed for a good likelihood evaluation.
+  \end{itemize}
+  Therefore, we evaluate the likelihood, together with a standard error, using replicated particle filters at each point estimate.
+  
+  <<lik_local,eval=FALSE,purl=FALSE>>=
+  foreach(mf=mifs_local,.combine=rbind,
+    .options.future=list(seed=900242057)
+  ) %dofuture% {
+    evals <- replicate(10, logLik(pfilter(mf,Np=5000)))
+    ll <- logmeanexp(evals,se=TRUE)
+    mf |> coef() |> bind_rows() |>
+      bind_cols(loglik=ll[1],loglik.se=ll[2])
+  } -> results
+  @
+  
+  <<lik_local_eval,include=FALSE>>=
+  bake(file="lik_local.rds",{
+    <<lik_local>>
+    attr(results,"ncpu") <- nbrOfWorkers()
+    results
+  }) -> results
+  t_local <- attr(results,"system.time")
+  ncpu_local <- attr(results,"ncpu")
+  @
+  
+  On \Sexpr{ncpu_local} processors, this local investigation took \Sexpr{round(t_loc[3],0)}~sec for the maximization and \Sexpr{round(t_local[3],0)}~sec for the likelihood evaluation.
+  
+  \framebreak
+  
+  These repeated stochastic maximizations can also show us the geometry of the likelihood surface in a neighborhood of this point estimate:
+
+  <<pairs_local,fig.width=6,fig.height=6,dpi=200,out.width="0.7\\textwidth">>=
+  pairs(~loglik+Beta+eta+rho,data=results,pch=16)
+  @
+  
+\end{frame}
+
+\begin{frame}[fragile]{Building up a picture of the likelihood surface}
+  This plot shows a hint of a ridge in the likelihood surface (cf.~the $\beta$-$\eta$ panel).
+  However, the sampling is as yet too sparse to give a clear picture.
+
+  We add these newly explored points to our database,
+
+  <<local_database,cache=FALSE>>=
+  read_csv("measles_params.csv") |>
+    bind_rows(results) |>
+    arrange(-loglik) |>
+    write_csv("measles_params.csv")
+  @
+  
+  and move on to a more thorough exploration of the likelihood surface.
+\end{frame}
+
+\section{Searching for the MLE}
+
+\subsection*{A global search}
+
+\begin{frame}[fragile,allowframebreaks]
+  \frametitle{A global search of the likelihood surface}
+
+  \begin{itemize}
+  \item When carrying out parameter estimation for dynamic systems, we need to specify beginning values for both the dynamic system (in the state space) and the parameters (in the parameter space).
+  \item To avoid confusion, we use the term ``initial values'' to refer to the state of the system at $t_0$ and ``starting values'' to refer to the point in parameter space at which a search is initialized.
+  \item Practical parameter estimation involves trying many starting values for the parameters.
+  \item One way to approach this is to choose a large box in parameter space that contains all remotely sensible parameter vectors.
+  \item If an estimation method gives stable conclusions with starting values drawn randomly from this box, this gives some confidence that an adequate global search has been carried out. 
+  \end{itemize}
+
+  \framebreak
+
+  For our measles model, a box containing reasonable parameter values might be
+  $\beta\in (5,80)$, $\rho\in (0.2,0.9)$, $\eta\in (0,1)$.
+
+  We are now ready to carry out likelihood maximizations from diverse starting points.
+
+  <<cluster_setup,include=FALSE,purl=TRUE>>=
+  if (file.exists("CLUSTER.R")) {
+    source("CLUSTER.R")
+  }
+  @
+  
+  <<global_search1>>=
+  set.seed(2062379496)
+
+  runif_design(
+    lower=c(Beta=5,rho=0.2,eta=0),
+    upper=c(Beta=80,rho=0.9,eta=1),
+    nseq=400
+  ) -> guesses
+
+  mf1 <- mifs_local[[1]]
+  @
+  
+  <<global_search2,eval=FALSE,purl=FALSE>>=
+  foreach(guess=iter(guesses,"row"), .combine=rbind,
+    .options.future=list(seed=1270401374)
+  ) %dofuture% {
+    mf1 |>
+      mif2(params=c(guess,fixed_params)) |>
+      mif2(Nmif=100) -> mf
+    replicate(
+      10,
+      mf |> pfilter(Np=5000) |> logLik()
+    ) |>
+      logmeanexp(se=TRUE) -> ll
+    mf |> coef() |> bind_rows() |>
+      bind_cols(loglik=ll[1],loglik.se=ll[2])
+  } -> results
+  @ 
+  <<global_search_eval,include=FALSE>>=
+  bake(file="global_search.rds",
+    dependson=guesses,{
+      <<global_search2>>
+      attr(results,"ncpu") <- nbrOfWorkers()
+      results
+    }) |>
+    filter(is.finite(loglik)) -> results
+  t_global <- attr(results,"system.time")
+  ncpu_global <- attr(results,"ncpu")
+  @ 
+  <<cache=FALSE,include=FALSE>>=
+  read_csv("measles_params.csv") |>
+    bind_rows(results) |>
+    filter(is.finite(loglik)) |>
+    arrange(-loglik) |>
+    write_csv("measles_params.csv")
+  @ 
+  
+  \begin{itemize}
+  \item The above codes run one search from each of \Sexpr{nrow(guesses)} starting values.
+  \item Each search consists of an initial run of \Sexpr{nrow(traces(mf1))-1} IF2 iterations, followed by another 100 iterations.
+  \item These codes exhibit a general \pkg{pomp} behavior:
+    \begin{itemize}
+    \item Re-running a command on an object (i.e., \code{mif2} on \code{mf1}) created by the same command preserves the algorithmic arguments.
+    \item In particular, running \code{mif2} on the result of a \code{mif2} computation re-runs IF2 from the endpoint of the first run.
+    \item In the second computation, by default, all algorithmic parameters are preserved;
+      here we overrode the default choice of \code{Nmif}.
+    \end{itemize}
+  \item Following the \code{mif2} computations, the particle filter is used to evaluate the likelihood, as before.
+  \end{itemize}
+
+  \framebreak
+
+  \begin{itemize}
+  \item In contrast to the local-search codes above, here we return only the endpoint of the search, together with the likelihood estimate and its standard error in a named vector.
+  \item The best result of this search had a likelihood of \Sexpr{round(max(results$loglik),1)} with a standard error of \Sexpr{round(results$loglik.se[which.max(results$loglik)],2)}.
+  \item This took \Sexpr{round(t_global["elapsed"]/60,1)} minutes altogether using \Sexpr{ncpu_global} processors.
+  \end{itemize}
+
+  \framebreak
+  
+  Again, we attempt to visualize the global geometry of the likelihood surface using a scatterplot matrix.
+  In particular, here we plot both the starting values (grey) and the IF2 estimates (red).
+
+  <<pairs_global1>>=
+  read_csv("measles_params.csv") |>
+    filter(loglik>max(loglik)-50) |>
+    bind_rows(guesses) |>
+    mutate(type=if_else(is.na(loglik),"guess","result")) |>
+    arrange(type) -> all
+
+  pairs(~loglik+Beta+eta+rho, data=all, pch=16, cex=0.3,
+    col=ifelse(all$type=="guess",grey(0.5),"red"))
+  @
+
+  \framebreak
+
+  \begin{itemize}
+  \item We see that optimization attempts from diverse remote starting points converge on a particular region in parameter space.
+  \item The estimates have comparable likelihoods, despite their considerable variability.
+  \item This gives us some confidence in our maximization procedure. 
+  \end{itemize}
+  \framebreak
+
+  The projections of the estimates give us ``poor man's profiles'':
+
+  <<pairs_global2>>=
+  all |>
+    filter(type=="result") |>
+    filter(loglik>max(loglik)-10) |>
+    ggplot(aes(x=eta,y=loglik))+
+    geom_point()+
+    labs(
+      x=expression(eta),
+      title="poor man's profile likelihood"
+    )
+  @
+\end{frame}
+
+\subsection*{Profile likelihood}
+
+\begin{frame}[fragile,allowframebreaks]{Profile likelihood over $\eta$}
+
+  \begin{itemize}
+  \item The curvature displayed in the upper envelope of the above plot suggests that there is indeed information in the data with respect to the susceptible fraction, $\eta$.
+  \item To solidify this evidence, let's compute a profile likelihood over this parameter.
+  \item Recall that this means determining, for each value of $\eta$, the best likelihood that the model can achieve.
+  \item To do this, we'll first bound the uncertainty by putting a box around the highest-likelihood estimates we've found so far.
+  \item Within this box, we'll choose some random starting points, for each of several values of $\eta$.
+  \end{itemize}
+
+  \framebreak
+  
+  <<eta_profile1a>>=
+  read_csv("measles_params.csv") |>
+    filter(loglik>max(loglik)-20,loglik.se<2) |>
+    sapply(range) -> box
+  box
+  @
+  
+  <<eta_profile1b>>=
+  freeze(seed=1196696958,
+    profile_design(
+      eta=seq(0.01,0.95,length=40),
+      lower=box[1,c("Beta","rho")],
+      upper=box[2,c("Beta","rho")],
+      nprof=15, type="runif"
+    )) -> guesses
+  plot(guesses)
+  @
+  
+  \framebreak
+
+  \begin{itemize}
+  \item Now, we'll start one independent sequence of iterated filtering operations from each of these points.
+  \item We'll be careful to keep $\eta$ fixed.
+  \item This is accomplished by not giving this parameter a random perturbation in the \code{mif2} call.
+  \end{itemize}
+  
+  \framebreak
+
+  <<eta_profile2,eval=FALSE,purl=FALSE>>=
+  foreach(guess=iter(guesses,"row"), .combine=rbind,
+    .options.future=list(seed=830007657)
+  ) %dofuture% {
+    mf1 |>
+      mif2(params=c(guess,fixed_params),
+        rw.sd=rw_sd(Beta=0.02,rho=0.02)) |>
+      mif2(Nmif=100,cooling.fraction.50=0.3) -> mf
+    replicate(
+      10,
+      mf |> pfilter(Np=5000) |> logLik()) |>
+      logmeanexp(se=TRUE) -> ll
+    mf |> coef() |> bind_rows() |>
+      bind_cols(loglik=ll[1],loglik.se=ll[2])
+  } -> results
+  @
+  
+  <<eta_profile2_eval,include=FALSE>>=
+  mf1 <- mifs_local[[1]]
+  bake(file="eta_profile.rds",
+    dependson=guesses,{
+      <<eta_profile2>>
+      attr(results,"ncpu") <- nbrOfWorkers()
+      results
+    }) -> results
+  t_eta <- attr(results,"system.time")
+  ncpu_eta <- attr(results,"ncpu")
+  @
+\end{frame}
+
+\begin{frame}[fragile,allowframebreaks]{Visualizing profile likelihood}
+
+  As always, we save the results in our global database and plot the results.
+
+  <<eta_profile_database,cache=FALSE>>=
+  read_csv("measles_params.csv") |>
+    bind_rows(results) |>
+    filter(is.finite(loglik)) |>
+    arrange(-loglik) |>
+    write_csv("measles_params.csv")
+  @
+  
+  <<eta_profile_pairs>>=
+  read_csv("measles_params.csv") |>
+    filter(loglik>max(loglik)-10) -> all
+
+  pairs(~loglik+Beta+eta+rho,data=all,pch=16)
+  @
+  
+  \framebreak
+
+  Plotting just the results of the profile calculation reveals that, while some of the IF2 runs either become ``stuck'' on local minima or run out of opportunity to reach the heights of the likelihood surface, many of the runs converge on high likelihoods.
+
+  <<eta_profile_plot1>>=
+  results |>
+    ggplot(aes(x=eta,y=loglik))+
+    geom_point()
+  @
+  
+  \framebreak
+
+  A closer look shows what at first appears to be quite a flat surface over much of the explored range of $\eta$.
+  Note that this appearance is due to the vertical scale, which is driven by the very low likelihoods associated with the smallest values of $\eta$.
+
+  <<eta_profile_plot2>>=
+  results |>
+    filter(is.finite(loglik)) |>
+    group_by(round(eta,5)) |>
+    filter(rank(-loglik)<3) |>
+    ungroup() |>
+    filter(loglik>max(loglik)-20) |>
+    ggplot(aes(x=eta,y=loglik))+
+    geom_point()
+  @ 
+  
+  \framebreak
+
+  Focusing on just the top of the surface shows that, in fact, one is able to estimate $\eta$ using these data.
+  In the following plot, the cutoff for the 95\% confidence interval (CI) is shown.
+
+  <<eta_profile_plot3>>=
+  maxloglik <- max(results$loglik,na.rm=TRUE)
+  ci.cutoff <- maxloglik-0.5*qchisq(df=1,p=0.95)
+
+  results |>
+    filter(is.finite(loglik)) |>
+    group_by(round(eta,5)) |>
+    filter(rank(-loglik)<3) |>
+    ungroup() |>
+    ggplot(aes(x=eta,y=loglik))+
+    geom_point()+
+    geom_smooth(method="loess",span=0.25)+
+    geom_hline(color="red",yintercept=ci.cutoff)+
+    lims(y=maxloglik-c(5,0))
+  @
+  
+  \framebreak
+
+  \begin{itemize}
+  \item As one varies $\eta$ across the profile, the model compensates by adjusting the other parameters.
+  \item It can be very instructive to understand how the model does this.
+  \item For example, how does the reporting efficiency, $\rho$, change as $\eta$ is varied?
+  \item We can plot $\rho$ vs $\eta$ across the profile.
+  \item This is called a \emph{profile trace}.
+  \end{itemize}
+  \framebreak
+
+  <<eta_profile_eta_by_rho>>=
+  results |>
+    filter(is.finite(loglik)) |>
+    group_by(round(eta,5)) |>
+    filter(rank(-loglik)<3) |>
+    ungroup() |>
+    mutate(in_ci=loglik>max(loglik)-1.92) |>
+    ggplot(aes(x=eta,y=rho,color=in_ci))+
+    geom_point()+
+    labs(
+      color="inside 95% CI?",
+      x=expression(eta),
+      y=expression(rho),
+      title="profile trace"
+    )
+  @
+\end{frame}
+
+\begin{frame}[fragile,allowframebreaks]{Profile over $\rho$}
+
+  <<include=FALSE>>=
+  results |>
+    filter(is.finite(loglik)) |>
+    filter(loglik>max(loglik)-0.5*qchisq(df=1,p=0.95)) |>
+    summarize(min=min(rho),max=max(rho)) -> rho_ci
+  @
+  
+  While the above profile trace is suggestive that the 95\% CI for $\rho$ must be between roughly \Sexpr{signif(100*rho_ci$min,1)}\% and \Sexpr{signif(100*rho_ci$max,1)}\%, to confirm this, we should construct a proper profile likelihood over $\rho$.
+  We do so now.
+
+  This time, we will initialize the IF2 computations at points we have already established have high likelihoods.
+
+  <<rho_profile1>>=
+  read_csv("measles_params.csv") |>
+    group_by(cut=round(rho,2)) |>
+    filter(rank(-loglik)<=10) |>
+    ungroup() |>
+    arrange(-loglik) |>
+    select(-cut,-loglik,-loglik.se) -> guesses
+  @
+  
+  \framebreak
+
+  <<rho_profile2,eval=FALSE,purl=FALSE>>=
+  foreach(guess=iter(guesses,"row"), .combine=rbind,
+    .options.future=list(seed=2105684752)
+  ) %dofuture% {
+    mf1 |>
+      mif2(params=guess,
+        rw.sd=rw_sd(Beta=0.02,eta=ivp(0.02))) |>
+      mif2(Nmif=100,cooling.fraction.50=0.3) |>
+      mif2() -> mf
+    replicate(
+      10,
+      mf |> pfilter(Np=5000) |> logLik()) |>
+      logmeanexp(se=TRUE) -> ll
+    mf |> coef() |> bind_rows() |>
+      bind_cols(loglik=ll[1],loglik.se=ll[2])
+  } -> results
+  @
+  <<rho_profile_eval,include=FALSE>>=
+  mf1 <- mifs_local[[1]]
+  bake(file="rho_profile.rds",
+    dependson=guesses,{
+      <<rho_profile2>>
+      attr(results,"ncpu") <- nbrOfWorkers()
+      results
+    }) -> results
+  t_rho <- attr(results,"system.time")
+  ncpu_rho <- attr(results,"ncpu")
+  @
+  <<include=FALSE,cache=FALSE>>=
+  read_csv("measles_params.csv") |>
+    bind_rows(results) |>
+    filter(is.finite(loglik)) |>
+    arrange(-loglik) |>
+    write_csv("measles_params.csv")
+  @ 
+\end{frame}
+
+\begin{frame}[fragile,allowframebreaks]{Profile over $\rho$: results}
+
+  <<>>=
+  results |>
+    filter(is.finite(loglik)) -> results
+
+  pairs(~loglik+Beta+eta+rho,data=results,pch=16)
+  @
+  
+  \framebreak
+
+  <<>>=
+  results |>
+    filter(loglik>max(loglik)-10,loglik.se<1) |>
+    group_by(round(rho,2)) |>
+    filter(rank(-loglik)<3) |>
+    ungroup() |>
+    ggplot(aes(x=rho,y=loglik))+
+    geom_point()+
+    geom_hline(
+      color="red",
+      yintercept=max(results$loglik)-0.5*qchisq(df=1,p=0.95)
+    )
+  @
+  
+  \framebreak
+
+  <<rho_ci>>=
+  results |>
+    filter(loglik>max(loglik)-0.5*qchisq(df=1,p=0.95)) |>
+    summarize(min=min(rho),max=max(rho)) -> rho_ci
+  @
+  
+  The data appear to be consistent with reporting efficiencies in the \Sexpr{signif(100*rho_ci$min,2)}--\Sexpr{signif(100*rho_ci$max,2)}\% range (95\% CI).
+\end{frame}
+
+\section{The investigation continues\dots.}
+
+\subsection*{Making predictions}
+
+\begin{frame}[allowframebreaks=0.7]{Parameter estimates as model predictions}
+  
+  \begin{itemize}
+  \item The estimated parameters are one kind of model prediction.
+  \item When we can estimate parameters using other data, we can test these predictions.
+  \item In the case of a highly contagious, immunizing childhood infection such as measles, we can obtain an estimate of the reporting efficiency, $\rho$ by simply regressing cumulative cases on cumulative births \citep{Anderson1991} over many years.
+  \item When we do this for Consett, we see that the reporting efficiency is roughly 60\%.
+  \item Since such a value makes the outbreak data quite unlikely, the prediction does not appear to be borne out.
+  \item We can conclude that one or more of our model assumptions is inconsistent with the data.
+  \item Let's revisit our assumption that the infectious period is known to be 0.5~wk.
+  \item Indeed, it would not be surprising were we to find that the \emph{effective} infectious period, at the population scale, were somewhat shorter than the \emph{clinical} infectious period.
+  \item For example, confinement of patients should reduce contact rates, and might therefore curtail the effective infectious period.
+  \item To investigate this, we'll relax our assumption about the value of $\mu_{IR}$.
+  \end{itemize}
+
+\end{frame}
+
+\subsection*{Searching in another direction}
+
+\begin{frame}[fragile,allowframebreaks]{Another global search}
+
+  We will estimate the model under the assumption that $\rho=0.6$, but without making assumptions about the duration of the infectious period.
+  As before, we'll construct a random design of starting parameters.
+  
+  <<exp_global_search1>>=
+  freeze(seed=55266255,
+    runif_design(
+      lower=c(Beta=5,mu_IR=0.2,eta=0),
+      upper=c(Beta=80,mu_IR=5,eta=0.99),
+      nseq=1000
+    )) |>
+    mutate(
+      rho=0.6,
+      k=10,
+      N=38000
+    ) -> guesses
+  @
+  
+  \framebreak
+
+  \begin{itemize}
+  \item For each of these starting points, we'll run a series of IF2 computations.
+  \item Since we have gained some experience applying \code{mif2} to this model and these data, we have some expectation about how much computation is required.
+  \item In the following, we'll use a lot more computational power than we have so far.
+  \end{itemize}
+
+  \framebreak
+
+  For each of the starting points, we'll first perform 100 IF2 iterations:
+
+  <<exp_global_search2a,eval=FALSE,purl=FALSE>>=
+  measSIR |>
+    mif2(params=guess, Np=2000, Nmif=100,
+      cooling.fraction.50=0.5,
+      partrans=parameter_trans(
+        log=c("Beta","mu_IR"),
+        logit="eta"), paramnames=c("Beta","mu_IR","eta"),
+      rw.sd=rw_sd(Beta=0.02,mu_IR=0.02,eta=ivp(0.02))) -> mf
+  @
+
+  We use random perturbations of the same magnitude as before, taking care to transform the parameters we are estimating.
+
+  \framebreak
+
+  We adopt a \emph{simulated tempering} approach (following a metallurgical analogy), in which we increase the size of the random perturbations some amount (i.e., ``reheat''), and then continue cooling.
+
+  <<exp_global_search2b,eval=FALSE,purl=FALSE>>=
+  mf |>
+    mif2(
+      Nmif=100,rw.sd=rw_sd(Beta=0.01,mu_IR=0.01,eta=ivp(0.01))
+    ) |>
+    mif2(
+      Nmif=100,
+      rw.sd=rw_sd(Beta=0.005,mu_IR=0.005,eta=ivp(0.005))
+    ) -> mf
+  @ 
+  
+  \framebreak
+
+  We wrap the above in a \code{foreach} loop as before and take care to evaluate the likelihood at each end-point using \code{pfilter}.
+
+  See the \link{./main.R}{\Rlanguage code for this lesson} to see exactly how this is done.
+
+  <<exp_global_search_eval,include=FALSE>>=
+  bake(file="global_search2.rds",
+    dependson=guesses,{
+      foreach(
+        guess=iter(guesses,"row"), .combine=rbind,
+        .options.future=list(seed=610408798)
+      ) %dofuture% {
+        <<exp_global_search2a>>
+        <<exp_global_search2b>>
+        replicate(
+          10,
+          mf |> pfilter(Np=5000) |> logLik()
+        ) |> logmeanexp(se=TRUE) -> ll
+        mf |> coef() |> bind_rows() |>
+          bind_cols(loglik=ll[1],loglik.se=ll[2])
+      } -> results
+      attr(results,"ncpu") <- nbrOfWorkers()
+      results
+    }) |>
+    filter(is.finite(loglik)) -> results
+  t_expglob <- attr(results,"system.time")
+  ncpu_expglob <- attr(results,"ncpu")
+  @
+  
+  <<include=FALSE,cache=FALSE>>=
+  read_csv("measles_params.csv") |>
+    bind_rows(results) |>
+    filter(is.finite(loglik)) |>
+    arrange(-loglik) |>
+    write_csv("measles_params.csv")
+  @
+  
+  The computations above required \Sexpr{round(t_expglob["elapsed"]/60,1)} minutes on \Sexpr{ncpu_expglob} processors.
+  
+  <<>>=
+  read_csv("measles_params.csv") |>
+    filter(loglik>max(loglik)-20) -> all
+
+  pairs(~loglik+rho+mu_IR+Beta+eta,data=all,pch=16,cex=0.3,
+    col=if_else(round(all$rho,3)==0.6,1,4))
+  @ 
+  
+  \framebreak
+
+  <<>>=
+  results |>
+    filter(loglik>max(loglik)-20,loglik.se<1) |>
+    ggplot(aes(x=mu_IR,y=loglik))+
+    geom_point()+
+    geom_hline(
+      color="red",
+      yintercept=max(results$loglik)-0.5*qchisq(df=1,p=0.95)
+    )
+  @
+  
+\end{frame}
+
+\begin{frame}[fragile,allowframebreaks]{Profile over infectious period}
+
+  To make inferences about $\mu_{IR}$, we can again compute a profile likelihood.
+  As before, we bound the region we will search:
+
+  <<mu_IR_profile1a>>=
+  read_csv("measles_params.csv") |>
+    filter(
+      loglik>max(loglik)-20,
+      loglik.se<2,
+      abs(rho-0.6)<0.01
+    ) |>
+    sapply(range) -> box
+  @
+  
+  \framebreak
+
+  <<mu_IR_profile1b>>=
+  freeze(seed=610408798,
+    profile_design(
+      mu_IR=seq(0.2,2,by=0.1),
+      lower=box[1,c("Beta","eta")],
+      upper=box[2,c("Beta","eta")],
+      nprof=100, type="runif"
+    )) |>
+    mutate(
+      N=38000,
+      rho=0.6,
+      k=10
+    ) -> guesses
+  @
+  
+  \framebreak
+
+  <<mu_IR_profile2,eval=FALSE,purl=FALSE>>=
+  foreach(guess=iter(guesses,"row"), .combine=rbind,
+    .options.future=list(seed=610408798)
+  ) %dofuture% {
+    measSIR |>
+      mif2(params=guess, Np=2000, Nmif=100,
+        partrans=parameter_trans(log="Beta",logit="eta"),
+        paramnames=c("Beta","eta"), cooling.fraction.50=0.5,
+        rw.sd=rw_sd(Beta=0.02,eta=ivp(0.02))
+      ) |>
+      mif2(Nmif=100) |>
+      mif2(Nmif=100,rw.sd=rw_sd(Beta=0.01,eta=ivp(0.01))) |>
+      mif2(Nmif=100,rw.sd=rw_sd(Beta=0.005,eta=ivp(0.005))) -> mf
+    replicate(10,mf |> pfilter(Np=5000) |> logLik()) |>
+      logmeanexp(se=TRUE) -> ll
+    mf |> coef() |> bind_rows() |>
+      bind_cols(loglik=ll[1],loglik.se=ll[2])
+  } -> results
+  @
+  
+  <<mu_IR_profile_eval,include=FALSE>>=
+  bake(file="mu_IR_profile1.rds",
+    dependson=guesses,{
+      <<mu_IR_profile2>>
+      attr(results,"ncpu") <- nbrOfWorkers()
+      results
+    }) |>
+    filter(is.finite(loglik)) -> results
+  t_muIR <- attr(results,"system.time")
+  ncpu_muIR <- attr(results,"ncpu")
+  @
+  
+  <<include=FALSE,cache=FALSE>>=
+  read_csv("measles_params.csv") |>
+    bind_rows(results) |>
+    filter(is.finite(loglik)) |>
+    arrange(-loglik) |>
+    write_csv("measles_params.csv")
+  @
+  
+\end{frame}
+
+\begin{frame}[fragile,allowframebreaks]{Infectious period profile}
+
+  <<mu_IR_profile_plot>>=
+  results |>
+    group_by(round(mu_IR,2)) |>
+    filter(rank(-loglik)<=1) |>
+    ungroup() |>
+    ggplot(aes(x=mu_IR,y=loglik))+
+    geom_point()+
+    geom_hline(
+      color="red",
+      yintercept=max(results$loglik)-0.5*qchisq(df=1,p=0.95)
+    )
+  @
+  
+  \framebreak
+
+  \begin{itemize}
+  \item This suggests that $\rho=0.6$ is consistent only with smaller values of $\mu_{IR}$, and hence \emph{longer} infectious periods than are possible if the duration of shedding is actually less than one week.
+  \item Thus the model is incapable of reconciling both an infectious period of less than one week and a reporting rate of 60\%.
+  \item \emph{What structural changes to the model might we make to improve its ability to explain the data?}
+  \end{itemize}
+
+\end{frame}
+
+\section{Exercises}
+
+\begin{frame}[allowframebreaks=0.9]{\myexercise. Fitting the SEIR model
+    \addtocounter{Ecounter}{-1}
+    %% A hack needed to stop multiple increments of the exercise counter
+    %% when the exercise is split over multiple slides
+  }
+  In this exercise, you will estimate the parameters and likelihood of the SEIR model you implemented in the earlier lessons by following the template above.
+  Purely for the sake of simplicity, you may assume that the values of $\mu_{IR}$ and $k$ are known.
+  To do this efficiently, we will make use of a system of \emph{run-levels}.
+  At each run-level, we will select some number of particles (\code{Np}), number of IF2 iterations (\code{Nmif}), and number of starting guesses, to achieve a particular result.
+  \begin{enumerate}[(A)]
+  \item \label{it:zero} First, conduct a local search and compute the likelihood at the end of each \code{mif2} run, as shown above.
+    Use only as many parallel \code{mif2} computations as you have processors on your computer (or perhaps somewhat fewer).
+    Track the time used and compute the amount of time used per cpu per IF2 iteration per 1000 particles.
+    (Recall that one particle filter computation is roughly equal to a IF2 iteration in computational complexity if they both use the same number of particles.)
+  \item At run-level 1, we want a quick calculation that verifies that the codes are working as expected.
+    Using the expense estimates you generated in Step~(\ref{it:zero}), choose a number of IF2 iterations so that you can do a very crude ``global search'' that will complete in two or three minutes.
+    Do not reduce \code{Np} drastically, as we don't want to degrade the performance of the individual IF2 computations.
+    Run your global search with these settings.
+    This serves to debug your global search code.
+  \item At run-level 2, we want a computation that gives us some results we can begin to interpret, but that is still as quick as possible.
+    Choose \code{Nmif} and the number of random starts so that you can obtain the beginnings of a global search of the parameter space in one hour or less.
+    Run your global search with these settings and plot the results.
+  \item Run-level 3 is intended for final or near-final results.
+    You may want to tune your settings (\code{Nmif}, \code{Np}, \code{rw.sd}, \code{cooling.fraction.50}) at this point, based on what you found at run-level 2.
+    Decide how much time in the next 18 hours is available to you for a computation.
+    Choose the number of starting guesses so that you can obtain as thorough a global search as possible within this period.
+    Run your global search and identify a maximum likelihood estimate.
+  \item How does the SEIR model compare with the SIR model?
+    Discuss the overall quality of the fit as well as important differences in how the two models are explaining the data.
+  \end{enumerate}
+
+  \vspace{1em}
+
+  \link{./Q_fit_seir.html}{Worked solution to the Exercise}
+
+\end{frame}
+
+\addtocounter{Ecounter}{1}
+\begin{frame}{\myexercise. Fitting all parameters of the SIR model}
+  In all of the foregoing, we have assumed a fixed value of the dispersion parameter, $k$, of the negative binomial measurement model.
+  We've also fixed one or the other of $\mu_{IR}$, $\eta$.
+  Now attempt to estimate all the parameters simultaneously.
+  To accomplish this, use the same system of run-levels as in the previous Exercise.
+  
+  How much is the fit improved?
+  How has the model's explanation of the data changed?
+
+  \vspace{1em}
+
+  \link{./Q_fit_all.html}{Worked solution to the Exercise}
+\end{frame}
+
+\begin{frame}{\myexercise. Construct a profile likelihood}
+  How strong is the evidence about the contact rate, $\beta$, given this model and data?
+  Use \code{mif2} to construct a profile likelihood.
+  Due to time constraints, you may be able to compute only a preliminary version.
+
+  It is also possible to profile over the basic reproduction number, $R_0=\beta /\mu_{IR}$.
+  Is this more or less well determined than $\beta$ for this model and data?
+\end{frame}
+
+\begin{frame}[allowframebreaks]{\myexercise. Checking the source code}
+
+
+  Check the source code for the \code{measSIR} pomp object, using the \code{spy} command.
+   \begin{enumerate}[(a)]
+\item 
+ Does the code implement the model described?
+\end{enumerate}
+  It can be surprisingly hard to make sure that the written equations and the code are perfectly matched.
+  Papers should be written to be readable, and therefore people rarely choose to clutter papers with numerical details which they hope and believe are scientifically irrelevant.
+  \begin{enumerate}[(b)]
+  \item What problems can arise due to the conflict between readability and reproducibility?
+  \item What solutions are available?
+  \end{enumerate}
+
+  \vspace{1mm}
+
+  \link{./Q_check_code.html}{Worked solution to the Exercise}
+
+\end{frame}
+
+\begin{frame}[allowframebreaks]{\myexercise. Beware errors in \code{rprocess}}
+
+  Suppose that there is an error in the coding of \code{rprocess} and suppose that plug-and-play statistical methodology is used to infer parameters.
+  As a conscientious researcher, you carry out a simulation study to check the soundness of your inference methodology on this model.
+  To do this, you use \code{simulate} to generate realizations from the fitted model and you check that your parameter inference procedure recovers the known parameters, up to some statistical error.
+  \begin{enumerate}[(a)]
+  \item Will this procedure help to identify the error in \code{rprocess}?
+  \item If not, how might you debug \code{rprocess}?
+  \item What research practices help minimize the risk of errors in simulation code?
+  \end{enumerate}
+  \vspace{1mm}
+
+  \link{./Q_error_in_rprocess.html}{Worked solution to the Exercise}
+
+
+\end{frame}
+
+\begin{frame}{\myexercise: Choosing the algorithmic settings for IF2}
+  Have a look at \link{./if2_settings.html}{our advice on tuning IF2}.
+  An exercise at the end of the linked document invites you to test this advice on the Consett measles example.
+\end{frame}
+
+\mode<presentation>{
+  \begin{frame}[allowframebreaks=0.8]{References}
+    \bibliography{sbied}
+  \end{frame}
+}
+\mode<article>{
+  \bibliography{sbied}
+}
+
+\begin{frame}{License, acknowledgments, and links}
+
+  \begin{itemize}
+  \item
+    This lesson is prepared for the \link{https://kingaa.github.io/sbied/}{Simulation-based Inference for Epidemiological Dynamics} module at the Summer Institute in Statistics and Modeling in Infectious Diseases, \link{https://www.biostat.washington.edu/suminst/sismid}{SISMID}.
+
+  \item
+    The materials build on \link{../acknowledge.html}{previous versions of this course and related courses}.
+
+  \item
+    Licensed under the \link{https://creativecommons.org/licenses/by-nc/4.0/}{Creative Commons Attribution-NonCommercial license}.
+    Please share and remix non-commercially, mentioning its origin.
+    \includegraphics[height=12pt]{../graphics/cc-by-nc}
+
+  \item
+    Produced with R version \Sexpr{getRversion()} and \pkg{pomp} version \Sexpr{packageVersion("pomp")}.
+
+  \item
+    Compiled on \today.
+
+  \end{itemize}
+
+  \link{index.html}{Back to Lesson}
+  
+  \link{./main.R}{\Rlanguage code for this lesson}
+
+\end{frame}
+
+\end{document}
