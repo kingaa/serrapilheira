@@ -1,7 +1,6 @@
 \input{header}
 
-\newcommand\CHAPTER{5}
-\title{Lesson \CHAPTER.\\Case study:\\Measles in large and small towns}
+\title{Case study:\\Measles in large and small towns}
 \author{Aaron A. King and Edward L. Ionides}
 
 <<knitr_opts,include=FALSE,cache=FALSE,purl=FALSE>>=

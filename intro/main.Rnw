@@ -8,8 +8,7 @@
 
 \mode<handout>{\pgfpagesuselayout{2 on 1}[letterpaper,border shrink=5mm]}
 
-\def\CHAPTER{1}
-\title{Lesson \CHAPTER:\\Introduction to Simulation-based Inference\\for Epidemiological Dynamics}
+\title{Introduction to Simulation-based Inference\\for Epidemiological Dynamics}
 \author{Aaron A. King and Edward L. Ionides}
 
 \setbeamertemplate{footline}[frame number]

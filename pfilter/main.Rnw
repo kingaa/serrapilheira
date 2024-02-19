@@ -4,8 +4,7 @@
 \usetikzlibrary {arrows.meta} % for tikz stealth arrow style
 \usetikzlibrary{shapes.geometric} % for tikz diamond nodes, etc
 
-\def\CHAPTER{3}
-\title{Lesson \CHAPTER:\\Likelihood-based inference for POMP models}
+\title{Likelihood-based inference for POMP models}
 \author{Aaron A. King and Edward L. Ionides}
 
 \begin{document}

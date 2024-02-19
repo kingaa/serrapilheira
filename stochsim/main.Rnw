@@ -1,7 +1,6 @@
 \input{header}
 
-\def\CHAPTER{2}
-\title{Lesson 2:\\Simulation of stochastic dynamic models}
+\title{Simulation of stochastic dynamic models}
 \author{Aaron A. King and Edward L. Ionides}
 
 \begin{document}
