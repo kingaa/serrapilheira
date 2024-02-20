@@ -11,16 +11,11 @@ output:
 
 ----------------------
 
-| &nbsp;                            | &nbsp;                                                                                     |
-|:----------------------------------|:------------------------------------------------------------------------------------------:|
-| Lecture notes                     | [PDF](notes.pdf)                                                                           |
-| Lecture slides                    | [PDF](slides.pdf)                                                                          |
-| Recording  (2020)                 | [Video (98 min)](https://www.youtube.com/playlist?list=PLluGwj6FGt2RBA4OQ_OdJj5CEJSjRGxut) |
-| Quiz                              | [PDF](quiz.pdf)                                                                            |
-| **R** script for the lesson       | [**R**](main.R)                                                                            |
-| Worked solutions to the Exercises | [HTML](exercises.html)                                                                     |
-----------------------
+| &nbsp;                            | &nbsp;                 |
+|:----------------------------------|:----------------------:|
+| Lecture notes                     | [PDF](notes.pdf)       |
+| Lecture slides                    | [PDF](slides.pdf)      |
+| Quiz                              | [PDF](quiz.pdf)        |
+| **R** script for the lesson       | [**R**](main.R)        |
+| Worked solutions to the Exercises | [HTML](exercises.html) |
 
-<iframe width="0" height="0"></iframe>
-
-<iframe data-external="1" width="560" height="315" src="https://www.youtube-nocookie.com/embed/videoseries?list=PLluGwj6FGt2RBA4OQ_OdJj5CEJSjRGxut" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>

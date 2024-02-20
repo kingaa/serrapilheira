@@ -18,4 +18,3 @@ output:
 | Supplement: A brief introduction to the likelihood       | [HTML](likelihood.html) |
 | Supplement: Working with ordinary differential equations | [HTML](odes.html)       |
 
-----------------------
