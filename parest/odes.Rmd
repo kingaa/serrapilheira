@@ -5,6 +5,12 @@ output:
   html_document:
     toc: yes
     toc_depth: 4
+    toc_float:
+      collapsed: TRUE
+      smooth_scroll: TRUE
+    highlight: haddock
+    number_sections: FALSE
+    df_print: paged
     includes:
       after_body:
       - ../_includes/supp_bottom.html
@@ -14,6 +20,8 @@ csl: ../jss.csl
 params:
   prefix: odes
 ---
+
+For your convenience, the **R** codes for this document are `r xfun::embed_file("odes.R",text="provided in a script")` which you can download, edit, and run.
 
 ```{r knitr-opts,include=FALSE,purl=FALSE,cache=FALSE}
 source("../_includes/setup.R", local = knitr::knit_global())
@@ -25,6 +33,7 @@ theme_set(theme_bw())
 set.seed(1173489184)
 ```
 
+## Introduction
 
 Here we begin our study of computational techniques for studying epidemiological models. 
 In this lesson we introduce the numerical solution (or integration) of nonlinear differential equations using the sophisticated solvers incorporated into **pomp**.
@@ -49,7 +58,7 @@ $$\lambda = \beta\,\frac{I}{N},$$
 so that the risk of infection a susceptible faces is proportional to the *prevalence* (the fraction of the population that is infected).
 This is known as the assumption of frequency-dependent transmission.
 
-### Numerical integration of ordinary differential equations
+## Numerical integration of ordinary differential equations
 
 Like almost all ecological and epidemiological models, one can't solve these equations analytically.
 However, we can compute the **trajectories** of a continuous-time model such as this one by integrating the equations numerically.
@@ -278,9 +287,9 @@ Compare the dynamics of SIR and SEIR models for the parameters $\mu=1/50$, $\gam
 
 --------------------------
 
-### Nonautonomous equations
+## Nonautonomous equations
 
-#### SIR with seasonal transmission
+### SIR with seasonal transmission
 
 The simple SIR model always predicts damped oscillations towards an equilibrium (or pathogen extinction if $R_0$ is too small). 
 This is at odds with the recurrent outbreaks seen in many real pathogens. 

@@ -6,7 +6,7 @@ library(pomp)
 theme_set(theme_bw())
 set.seed(1173439184)
 
-niamey <- read.csv("http://kingaa.github.io/short-course/parest/niamey.csv")
+niamey <- read.csv("http://kingaa.github.io/serrapilheira/parest/niamey.csv")
 niamey |>
   ggplot(aes(x=biweek,y=measles,color=community))+
   geom_line()+

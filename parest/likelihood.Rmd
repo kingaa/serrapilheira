@@ -5,6 +5,12 @@ output:
   html_document:
     toc: yes
     toc_depth: 4
+    toc_float:
+      collapsed: TRUE
+      smooth_scroll: TRUE
+    highlight: haddock
+    number_sections: FALSE
+    df_print: paged
     includes:
       after_body:
       - ../_includes/supp_bottom.html
@@ -17,6 +23,8 @@ params:
 
 \newcommand\prob[1]{\mathbb{P}\left[{#1}\right]}
 \newcommand\lik{\mathcal{L}}
+
+For your convenience, the **R** codes for this document are `r xfun::embed_file("likelihood.R",text="provided in a script")` which you can download, edit, and run.
 
 ```{r knitr-opts,include=FALSE,purl=FALSE,cache=FALSE}
 source("../_includes/setup.R", local = knitr::knit_global())
@@ -49,6 +57,9 @@ and some disadvantages:
 
 1. fidelity to model  
 1. fragility (lack of robustness)  
+
+The method of maximum likelihood was introduced by @Fisher1922.
+A good general reference on likelihood is by @Pawitan2001.
 
 ## Definition
 

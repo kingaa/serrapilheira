@@ -1,6 +1,6 @@
 ---
 title: |
-  Introduction to Simulation-based Inference for Epidemiological Dynamics
+  Introduction: Partially observed Markov processes and simulation-based inference.
 output:
   html_document:
     includes:
