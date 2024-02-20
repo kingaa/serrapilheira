@@ -18,10 +18,6 @@ params:
 \newcommand\prob[1]{\mathbb{P}\left[{#1}\right]}
 \newcommand\lik{\mathcal{L}}
 
-This lesson is [licensed under the Creative Commons Attribution-NonCommercial license](http://creativecommons.org/licenses/by-nc/4.0/).
-Please share and remix noncommercially, mentioning its origin.  
-![CC-BY_NC](../graphics/cc-by-nc.png)
-
 ```{r knitr-opts,include=FALSE,purl=FALSE,cache=FALSE}
 source("../_includes/setup.R", local = knitr::knit_global())
 ```

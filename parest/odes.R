@@ -3,7 +3,6 @@ list(prefix = "odes")
 
 library(tidyverse)
 library(pomp)
-stopifnot(packageVersion("pomp")>="5.6")
 theme_set(theme_bw())
 set.seed(1173489184)
 

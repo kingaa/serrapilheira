@@ -15,18 +15,12 @@ params:
   prefix: odes
 ---
 
-This lesson is based on notes developed over the years and contains contributions originally made by Ben Bolker, John Drake, Pej Rohani, and David Smith.
-It is [licensed under the Creative Commons Attribution-NonCommercial license](http://creativecommons.org/licenses/by-nc/4.0/).
-Please share and remix noncommercially, mentioning its origin.  
-![CC-BY_NC](../graphics/cc-by-nc.png)
-
 ```{r knitr-opts,include=FALSE,purl=FALSE,cache=FALSE}
 source("../_includes/setup.R", local = knitr::knit_global())
 ```
 ```{r prelims,include=FALSE,cache=FALSE}
 library(tidyverse)
 library(pomp)
-stopifnot(packageVersion("pomp")>="5.6")
 theme_set(theme_bw())
 set.seed(1173489184)
 ```
