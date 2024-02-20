@@ -1,6 +1,6 @@
 ---
 title: |
-  Worked solution to exercise 3.3:
+  Worked solution to exercise 3:
   Precision and accuracy of particle-filter likelihood estimates
 author: Aaron A. King and Edward L. Ionides
 output:
