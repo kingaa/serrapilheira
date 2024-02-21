@@ -215,7 +215,7 @@ $$
 
 ## Endemic cholera
 
-```{r}
+```{r out.width="80%"}
 library(cholera)
 IndiaCholera |> 
   subset(district %in% c("Midnapore","Dacca","Jalpaiguri")) |>
@@ -637,7 +637,7 @@ Because the particle filter gives as unbiased, though noisy, estimate of the lik
 
 ## Likelihood profile
 
-```{r dacca-profile1,fig.height=3,echo=FALSE}
+```{r dacca-profile1,fig.height=5,out.width="80%",echo=FALSE}
 read.csv("data/mle.csv") |>
   filter(dataset=="Dacca") |>
   mutate(
@@ -669,7 +669,7 @@ x |>
 
 ## Profile trace plots
 
-```{r dacca-profile2,fig.height=3,echo=FALSE}
+```{r dacca-profile2,fig.height=5,out.width="80%",echo=FALSE}
 read.csv("data/mle.csv") |>
   filter(dataset=="Dacca") |>
   mutate(
