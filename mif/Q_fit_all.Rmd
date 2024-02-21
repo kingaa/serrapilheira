@@ -8,7 +8,7 @@ output:
       after_body:
       - ../_includes/supp_bottom.html
       - ../_includes/license.html
-bibliography: ../sbied.bib
+bibliography: ../course.bib
 csl: ../jss.csl
 params:
   prefix: Q_fit_all
@@ -56,7 +56,7 @@ library(iterators)
 library(doFuture)
 plan(multisession)
 
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 read_csv("measles_params.csv") |>
   filter(!is.na(loglik), loglik.se<1) |>
@@ -101,7 +101,7 @@ foreach(i=1:8,.combine=c,
 ```{r local_search_eval}
 #| include: false
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/pfilter/bake.html
+## See https://kingaa.github.io/serrapilheira/misc/bake.html
 ## for an explanation.
 bake(file="fitall_local_search.rds",{
   <<local_search>>
@@ -149,7 +149,7 @@ foreach(mf=mifs_local,.combine=rbind,
 ```{r lik_local_eval}
 #| include: false
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/pfilter/bake.html
+## See https://kingaa.github.io/serrapilheira/misc/bake.html
 ## for an explanation.
 bake(file="fitall_lik_local.rds",{
   <<lik_local>>
@@ -187,7 +187,7 @@ if (file.exists("CLUSTER.R")) {
 ```
 
 We set up a design of starting points.
-The `freeze` command is described [here](../pfilter/bake.html).
+The `freeze` command is described [here](../misc/bake.html).
 
 ```{r global1_search_setup}
 freeze(
@@ -238,7 +238,7 @@ foreach(guess=iter(guesses,"row"), .combine=rbind,
 ```{r global1_search_eval}
 #| include: false
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/pfilter/bake.html
+## See https://kingaa.github.io/serrapilheira/misc/bake.html
 ## for an explanation.
 bake(file="fitall_global_search.rds",
   dependson="guesses",{
@@ -358,7 +358,7 @@ foreach(guess=iter(guesses,"row"), .combine=rbind,
 ```{r eta_profile2_eval}
 #| include: false
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/pfilter/bake.html
+## See https://kingaa.github.io/serrapilheira/misc/bake.html
 ## for an explanation.
 bake(file="fitall_eta_profile.rds",
   dependson="guesses",{

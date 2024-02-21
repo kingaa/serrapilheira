@@ -12,7 +12,7 @@ set.seed(1350254336)
 
 
 
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 library(pomp)
 measSIR |>
@@ -35,7 +35,7 @@ logmeanexp(ll,se=TRUE)
 
 
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/misc/bake.html
+## See https://kingaa.github.io/serrapilheira/misc/bake.html
 ## for an explanation.
 bake(file="like-slice.rds",{
   slice_design(

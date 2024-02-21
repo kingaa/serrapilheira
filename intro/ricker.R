@@ -1,6 +1,6 @@
 library(pomp)
 
-loc <- url("https://kingaa.github.io/sbied/intro/parus.csv")
+loc <- url("https://kingaa.github.io/serrapilheira/intro/parus.csv")
 dat <- read.csv(loc)
 head(dat)
 plot(pop~year,data=dat,type='o')

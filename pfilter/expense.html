@@ -370,7 +370,7 @@ library(pomp)
 library(iterators)
 library(doFuture)</code></pre>
 <p>Construct the pomp object for the Consett measles example</p>
-<pre class="r"><code>source(&quot;https://kingaa.github.io/sbied/pfilter/model.R&quot;)</code></pre>
+<pre class="r"><code>source(&quot;https://kingaa.github.io/serrapilheira/pfilter/model.R&quot;)</code></pre>
 <p>Now run particle filters of several sizes, measuring the amount of time elapses for each one.</p>
 <pre class="r"><code>expand_grid(
   Np=ceiling(10^seq(1,5,by=0.2))

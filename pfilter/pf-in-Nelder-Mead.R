@@ -5,7 +5,7 @@ library(tidyverse)
 library(pomp)
 set.seed(594709947L)
 
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 measSIR |>
   pomp(partrans=parameter_trans(log=c("Beta","mu_IR"),logit=c("rho","eta")),

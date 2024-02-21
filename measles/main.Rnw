@@ -1129,18 +1129,16 @@ $r=\mathrm{cor}_{S}({\cdot},{N_{1950}})$ (Spearman rank correlation)
 
 \mode<presentation>{
   \begin{frame}[allowframebreaks=0.8]{References}
-    \bibliography{sbied}
+    \bibliography{course}
   \end{frame}
 }
 \mode<article>{
-  \bibliography{sbied}
+  \bibliography{course}
 }
 
 \begin{frame}{License, acknowledgments, and links}
 
   \begin{itemize}
-  \item
-    This lesson is prepared for the \link{https://kingaa.github.io/sbied/}{Simulation-based Inference for Epidemiological Dynamics} module at the Summer Institute in Statistics and Modeling in Infectious Diseases, \link{https://www.biostat.washington.edu/suminst/sismid}{SISMID}.
 
   \item
     The materials build on \link{../acknowledge.html}{previous versions of this course and related courses}.

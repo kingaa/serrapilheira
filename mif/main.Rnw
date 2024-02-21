@@ -288,7 +288,7 @@ set.seed(1350254336)
   The following loads the data, \pkg{pomp}, and the stochastic SIR model we constructed there.
 
   <<model-construct>>=
-  source("https://kingaa.github.io/sbied/pfilter/model.R")
+  source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
   @
   
   <<dataplot,purl=FALSE,echo=FALSE,dpi=200,out.width="0.7\\textwidth">>=
@@ -344,7 +344,7 @@ set.seed(1350254336)
 
 \begin{frame}[fragile,allowframebreaks=0.8]{Parallel computing}
   It will be helpful to parallelize most of the computations.
-  \link{https://kingaa.github.io/sbied/pfilter/}{Lesson 3} discusses how to accomplish this using \pkg{foreach}.
+  \link{https://kingaa.github.io/serrapilheira/pfilter/}{Lesson 3} discusses how to accomplish this using \pkg{foreach}.
 
   <<parallel-setup,cache=FALSE>>=
   library(foreach)
@@ -425,7 +425,7 @@ set.seed(1350254336)
   @ 
   <<local_search_eval,echo=FALSE>>=
   ## What is this 'bake' function?
-  ## See https://kingaa.github.io/sbied/pfilter/bake.html
+  ## See https://kingaa.github.io/serrapilheira/pfilter/bake.html
   ## for an explanation.
   bake(file="local_search.rds",{
     <<local_search>>
@@ -1288,19 +1288,16 @@ set.seed(1350254336)
 
 \mode<presentation>{
   \begin{frame}[allowframebreaks=0.8]{References}
-    \bibliography{sbied}
+    \bibliography{course}
   \end{frame}
 }
 \mode<article>{
-  \bibliography{sbied}
+  \bibliography{course}
 }
 
 \begin{frame}{License, acknowledgments, and links}
 
   \begin{itemize}
-  \item
-    This lesson is prepared for the \link{https://kingaa.github.io/sbied/}{Simulation-based Inference for Epidemiological Dynamics} module at the Summer Institute in Statistics and Modeling in Infectious Diseases, \link{https://www.biostat.washington.edu/suminst/sismid}{SISMID}.
-
   \item
     The materials build on \link{../acknowledge.html}{previous versions of this course and related courses}.
 

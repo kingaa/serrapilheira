@@ -377,7 +377,7 @@ pre code {
 <li>Finally, the parameters set we must optimize over is not unbounded. In particular, we must have <span class="math inline">\(\beta,\mu_{IR}&gt;0\)</span> and <span class="math inline">\(0&lt;\rho,\eta&lt;1\)</span>. We must therefore select an optimizer that can solve this <em>constrained maximization problem</em>, or find some of way of turning it into an unconstrained maximization problem. For example, we can transform the parameters onto a scale on which there are no constraints.</li>
 </ol>
 <p>Let’s try this out on the toy SIR model we were working with, reconstructed as follows.</p>
-<pre class="r"><code>source(&quot;https://kingaa.github.io/sbied/pfilter/model.R&quot;)</code></pre>
+<pre class="r"><code>source(&quot;https://kingaa.github.io/serrapilheira/pfilter/model.R&quot;)</code></pre>
 <p>Here, let’s opt for deterministic optimization of a rough function. We’ll try using <code>optim</code>’s default method: Nelder-Mead, fixing the random-number generator seed to make the likelihood calculation deterministic. Since Nelder-Mead is an unconstrained optimizer, we must transform the parameters. The following introduces such a transformation into the <code>pomp</code> object.</p>
 <pre class="r"><code>measSIR |&gt;
   pomp(partrans=parameter_trans(log=c(&quot;Beta&quot;,&quot;mu_IR&quot;),logit=c(&quot;rho&quot;,&quot;eta&quot;)),

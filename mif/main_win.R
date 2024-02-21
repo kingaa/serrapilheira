@@ -2,9 +2,7 @@ library(tidyverse)
 library(pomp)
 set.seed(1350254336)
 
-options(pomp_cdir="./tmp")
-
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 
 
@@ -38,14 +36,9 @@ pf[[1]] |> coef() |> bind_rows() |>
 
 
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/pfilter/bake.html
+## See https://kingaa.github.io/serrapilheira/pfilter/bake.html
 ## for an explanation.
 bake(file="local_search.rds",{
-  measSIR |>
-    pomp(
-      partrans=parameter_trans(log="Beta",logit=c("rho","eta")),
-      paramnames=c("Beta","rho","eta")
-    ) -> measSIR
   foreach(i=1:20,.combine=c,
     .options.future=list(seed=482947940)
   ) %dofuture% {
@@ -53,7 +46,9 @@ bake(file="local_search.rds",{
       mif2(
         Np=2000, Nmif=50,
         cooling.fraction.50=0.5,
-        rw.sd=rw_sd(Beta=0.02, rho=0.02, eta=ivp(0.02))
+        rw.sd=rw_sd(Beta=0.02, rho=0.02, eta=ivp(0.02)),
+        partrans=parameter_trans(log="Beta",logit=c("rho","eta")),
+        paramnames=c("Beta","rho","eta")
       )
   } -> mifs_local
   attr(mifs_local,"ncpu") <- nbrOfWorkers()

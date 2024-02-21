@@ -2,7 +2,7 @@ library(tidyverse)
 library(pomp)
 set.seed(1350254336)
 
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 
 
@@ -36,7 +36,7 @@ pf[[1]] |> coef() |> bind_rows() |>
 
 
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/pfilter/bake.html
+## See https://kingaa.github.io/serrapilheira/pfilter/bake.html
 ## for an explanation.
 bake(file="local_search.rds",{
   foreach(i=1:20,.combine=c,

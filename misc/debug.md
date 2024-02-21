@@ -9,7 +9,7 @@ output:
       after_body:
       - ../_includes/supp_bottom.html
       - ../_includes/license.html
-bibliography: ../sbied.bib
+bibliography: ../course.bib
 csl: ../jss.csl
 ---
 

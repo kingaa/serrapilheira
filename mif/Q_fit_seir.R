@@ -8,7 +8,7 @@ library(doFuture)
 if (.Platform$OS.type=="windows") 
   options(pomp_cdir="./tmp")
 
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 seir_step <- Csnippet("
   double dN_SE = rbinom(S,1-exp(-Beta*I/N*dt));

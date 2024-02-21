@@ -360,11 +360,11 @@ set.seed(1350254336)
 \begin{frame}[fragile,allowframebreaks]{Particle filtering in \pkg{pomp}}
 
   Here, we'll get some practical experience with the particle filter, and the likelihood function, in the context of our measles-outbreak case study.
-  Here, we repeat the construction of the SIR model \link{https://kingaa.github.io/sbied/stochsim/}{we looked at earlier}, using the parameters chosen by looking at simulations.
+  Here, we repeat the construction of the SIR model \link{https://kingaa.github.io/serrapilheira/stochsim/}{we looked at earlier}, using the parameters chosen by looking at simulations.
   \Rlanguage code to build the model is available \link{./model.R}{for download}.
   We can execute this code by sourcing the relevant file:
   <<model-construct,purl=TRUE>>=
-  source("https://kingaa.github.io/sbied/pfilter/model.R")
+  source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
   @
 
   In \pkg{pomp}, the basic particle filter is implemented in the command \code{pfilter}.
@@ -463,7 +463,7 @@ set.seed(1350254336)
 \begin{frame}{Profile likelihood estimation}
   This approach is generally preferable to the Fisher information for POMP models.
 
-  We will explain this method below and put it into practice in the \link{https://kingaa.github.io/sbied/mif/}{next lesson}.
+  We will explain this method below and put it into practice in the \link{https://kingaa.github.io/serrapilheira/mif/}{next lesson}.
 \end{frame}
 
 \begin{frame}{The bootstrap}
@@ -577,7 +577,7 @@ set.seed(1350254336)
 
   <<like-slice-eval,include=FALSE,purl=TRUE>>=
   ## What is this 'bake' function?
-  ## See https://kingaa.github.io/sbied/misc/bake.html
+  ## See https://kingaa.github.io/serrapilheira/misc/bake.html
   ## for an explanation.
   bake(file="like-slice.rds",{
     <<like-slice1>>
@@ -851,19 +851,16 @@ set.seed(1350254336)
 
 \mode<presentation>{
   \begin{frame}[allowframebreaks=0.8]{References}
-    \bibliography{sbied}
+    \bibliography{course}
   \end{frame}
 }
 \mode<article>{
-  \bibliography{sbied}
+  \bibliography{course}
 }
 
 \begin{frame}{License, acknowledgments, and links}
 
   \begin{itemize}
-  \item
-    This lesson is prepared for the \link{https://kingaa.github.io/sbied/}{Simulation-based Inference for Epidemiological Dynamics} module at the Summer Institute in Statistics and Modeling in Infectious Diseases, \link{https://www.biostat.washington.edu/suminst/sismid}{SISMID}.
-
   \item
     The materials build on \link{../acknowledge.html}{previous versions of this course and related courses}.
 

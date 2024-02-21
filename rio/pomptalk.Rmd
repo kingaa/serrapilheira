@@ -8,7 +8,7 @@ output:
     self_contained: true
     css: pomptalk.css
     smart: true
-bibliography: ../sbied.bib
+bibliography: ../course.bib
 csl: ../jss.csl
 params:
   prefix: pomptalk
@@ -344,7 +344,7 @@ What is the best vaccination strategy?
 ## Endemic cholera
 
 ```{r cholera_plot,out.width="80%"}
-library(cholera)
+read_csv("data/IndiaCholera.csv") -> IndiaCholera
 IndiaCholera |> 
   filter(
     district %in% c("Midnapore","Dacca","Jalpaiguri"),

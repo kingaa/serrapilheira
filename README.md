@@ -1,20 +1,5 @@
-Simulation-based Inference for Epidemiological Dynamics<br>Course Materials
----------------------------------------------------------------------------
-
-These are notes from a short course given by [Ed
-Ionides](https://ionides.github.io/) and [Aaron
-King](https://kinglab.eeb.lsa.umich.edu/king/) at the [Summer Institute
-in Statistics and Modeling in Infectious Diseases
-(SISMID)](https://sismid.uw.edu). From the [main
-page](https://kingaa.github.io/sbied/), links lead to pages on a number
-of specific topics, culminating in four case studies that exemplify the
-methods and raise key issues. For each such page, there is a
-corresponding **R** script, which contains the codes needed to
-recapitulate the calculations. This script is a starting point for
-students to follow, explore, and modify the analysis according to their
-own curiosity and interest.
-
-------------------------------------------------------------------------
+Inference for Disease Dynamics<br>Course Materials
+--------------------------------------------------
 
 ### Required software
 
@@ -32,15 +17,11 @@ not used *in* the materials:
 -   **diagram**
 -   **mapproj**
 
-The `contacts` lesson requires
-[**panelPomp**](https://github.com/cbreto/panelPomp). An installation
-script is provided there.
+A [Github Action](https://github.com/kingaa/serrapilheira/actions)
+checks that these installations and actions succeed on a variety of
+current and legacy platforms:
 
-A [Github Action](https://github.com/kingaa/sbied/actions) checks that
-these installations and actions succeed on a variety of current and
-legacy platforms:
-
-[![install-test](https://github.com/kingaa/sbied/actions/workflows/install-test.yml/badge.svg)](https://github.com/kingaa/sbied/actions/workflows/install-test.yml)
+[![install-test](https://github.com/kingaa/serrapilheira/actions/workflows/install-test.yml/badge.svg)](https://github.com/kingaa/serrapilheira/actions/workflows/install-test.yml)
 
 ------------------------------------------------------------------------
 
@@ -62,7 +43,7 @@ legacy platforms:
 -   LICENSE.md: Full text of license
 -   TODO.md: To-do list
 -   Makefile, rules.mk: GNU Make files
--   sbied.bib: Bibliography database
+-   course.bib: Bibliography database
 -   jss.bst, jss.csl: Bibliography style files
 -   CLUSTER.R: example `CLUSTER.R` file for site-specific cluster setup
 
@@ -111,9 +92,7 @@ and the time required for their computation on a linux cluster with
 </tbody>
 </table>
 
-The archives amount to about 5 MB. About 0 MB of this is associated with
-the polio lesson, in which large amounts of redundant information are
-stored.
+The archives amount to about 5 MB.
 
 Full compilation, i.e., rebuilding the complete set of materials
 following deletion of all archives, requires about 320 min on a

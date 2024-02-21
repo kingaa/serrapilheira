@@ -5,7 +5,7 @@ library(tidyverse)
 library(pomp)
 set.seed(594709947L)
 
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 measSIR |>
   simulate(nsim=5000,format="arrays") -> x

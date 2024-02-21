@@ -14,7 +14,7 @@ Please complete this questionnaire to help us prepare for the short course.
 1. What version of R do you have installed (minimum 3.5.1)? *
 1. How many cores does your computer have?
 1. Verify that you were able to complete the software installation. *
-   The installation instructions are at https://kingaa.github.io/sbied/prep/.
+   The installation instructions are at https://kingaa.github.io/serrapilheira/prep/.
    Mark only one oval.
 	- Yes, I completed it without errors.
 	- I completed it without errors, but had some warnings. Copy and paste the text of the warnings below.

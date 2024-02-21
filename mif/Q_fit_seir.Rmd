@@ -9,7 +9,7 @@ output:
       after_body:
       - ../_includes/supp_bottom.html
       - ../_includes/license.html
-bibliography: ../sbied.bib
+bibliography: ../course.bib
 csl: ../jss.csl
 params:
   prefix: Q_fit_seir
@@ -83,7 +83,7 @@ if (.Platform$OS.type=="windows")
 #| results: hide
 #| message: false
 #| warning: false
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 ```
 
 ```{r seir_pomp}
@@ -232,12 +232,12 @@ local_logliks$loglik
 local_logliks$loglik.se
 ```
 
-After `r local_mifs[[1]]@Nmif` IF2 iterations, the log likelihoods appear to have already reached the vicinity of what we found for the SIR model, with small s.e. ([if `logmeanexp` is to be trusted](https://kingaa.github.io/sbied/pfilter/loglikest.html)).
+After `r local_mifs[[1]]@Nmif` IF2 iterations, the log likelihoods appear to have already reached the vicinity of what we found for the SIR model, with small s.e. ([if `logmeanexp` is to be trusted](https://kingaa.github.io/serrapilheira/pfilter/loglikest.html)).
 Moreover, the trace-plots suggest that further improvement is possible.
 
 Now, we quantify the amount of time required for the above.
 Note that we used `bake` to archive the results of the above two computations.
-[[More about `bake` here.](https://kingaa.github.io/sbied/misc/bake.html)].
+[[More about `bake` here.](https://kingaa.github.io/serrapilheira/misc/bake.html)].
 The archives store not only the results, but also information about the time elapsed.
 Accordingly, the first line in the following adds up the total time needed for these two computations.
 The second and third lines add up the total amount of work, which we have seen is jointly proportional to number of `mif2` or `pfilter` iterations and to the number of particles used.

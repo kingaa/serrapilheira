@@ -9,7 +9,7 @@ library(tidyverse)
 library(pomp)
 library(doFuture)
 
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 plan(multisession)
 foreach (

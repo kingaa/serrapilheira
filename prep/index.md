@@ -27,9 +27,12 @@ hr {
 Please read the appropriate sections below, which give specific instructions for installing and testing the software we will be using.
 First follow the instructions for "all users", then those for your specific operating system (OS).
 
+Note that there is an installation step, followed by a test step.
+Your system will not be ready until it passes the test step.
+
 <div class="nb"> 
 
-**Important note:** If you run into problems, send a direct message to `@Aaron A. King` on the course Slack channel with a detailed description of the problem you've encountered.
+**Important note:** If you run into problems, contact Aaron King at `kingaa@umich.edu` with a detailed description of the problem you've encountered.
 In this message, **be certain to include all of the following information**:
 
 - the operating system you’re running,
@@ -65,7 +68,7 @@ Open a session in **RStudio** and run the following:
 
 ```
 > update.packages()
-> source("https://kingaa.github.io/sbied/prep/packages.R")
+> source("https://kingaa.github.io/serrapilheira/prep/packages.R")
 ```
 
 *[The `>` is the command prompt; it is not part of the command.

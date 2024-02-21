@@ -349,7 +349,7 @@ set.seed(2488820)
 
   <<meas-data1>>=
   library(tidyverse)
-  read_csv(paste0("https://kingaa.github.io/sbied/stochsim/",
+  read_csv(paste0("https://kingaa.github.io/serrapilheira/stochsim/",
     "Measles_Consett_1948.csv")) |>
     select(week,reports=cases) -> meas
   meas |> as.data.frame() |> head()
@@ -658,19 +658,16 @@ set.seed(2488820)
 
 \mode<presentation>{
   \begin{frame}[allowframebreaks=0.8]{References}
-    \bibliography{sbied}
+    \bibliography{course}
   \end{frame}
 }
 \mode<article>{
-  \bibliography{sbied}
+  \bibliography{course}
 }
 
 \begin{frame}{License, acknowledgments, and links}
 
   \begin{itemize}
-  \item
-    This lesson is prepared for the \link{https://kingaa.github.io/sbied/}{Simulation-based Inference for Epidemiological Dynamics} module at the Summer Institute in Statistics and Modeling in Infectious Diseases, \link{https://www.biostat.washington.edu/suminst/sismid}{SISMID}.
-
   \item
     The materials build on \link{../acknowledge.html}{previous versions of this course and related courses}.
 

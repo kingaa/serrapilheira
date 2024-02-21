@@ -380,7 +380,7 @@ library(iterators)
 library(doFuture)
 plan(multisession)
 
-source(&quot;https://kingaa.github.io/sbied/pfilter/model.R&quot;)
+source(&quot;https://kingaa.github.io/serrapilheira/pfilter/model.R&quot;)
 
 read_csv(&quot;measles_params.csv&quot;) |&gt;
   filter(!is.na(loglik), loglik.se&lt;1) |&gt;
@@ -458,7 +458,7 @@ read_csv(&quot;measles_params.csv&quot;) |&gt;
   arrange(-loglik) |&gt;
   write_csv(&quot;fitall_params.csv&quot;)</code></pre>
 <p>Now we attempt a global search of the <span class="math inline">\(k\)</span>-<span class="math inline">\(\beta\)</span>-<span class="math inline">\(\rho\)</span>-<span class="math inline">\(\eta\)</span>-<span class="math inline">\(\mu_{IR}\)</span> space.</p>
-<p>We set up a design of starting points. The <code>freeze</code> command is described <a href="../pfilter/bake.html">here</a>.</p>
+<p>We set up a design of starting points. The <code>freeze</code> command is described <a href="../misc/bake.html">here</a>.</p>
 <pre class="r"><code>freeze(
   runif_design(
     lower=c(Beta=5,rho=0.2,eta=0,k=1,mu_IR=0.5),

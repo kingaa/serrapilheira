@@ -8,7 +8,7 @@ output:
       after_body:
       - ../_includes/supp_bottom.html
       - ../_includes/license.html
-bibliography: ../sbied.bib
+bibliography: ../course.bib
 csl: ../jss.csl
 params:
   prefix: windows
@@ -67,7 +67,7 @@ library(tidyverse)
 library(pomp)
 library(doFuture)
 
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 ```
 
 Now compare the following two code chunks.

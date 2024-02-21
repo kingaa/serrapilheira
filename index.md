@@ -6,7 +6,7 @@ output:
       after_body:
       - _includes/main_bottom.html
       - _includes/license.html
-bibliography: sbied.bib
+bibliography: course.bib
 csl: jss.csl
 
 ---

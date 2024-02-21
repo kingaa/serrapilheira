@@ -6,13 +6,14 @@ output:
     includes:
       after_body:
       - _includes/license.html
-bibliography: sbied.bib
+bibliography: course.bib
 csl: jss.csl
 ---
 
 ---------------------
 
 - These materials are based on a short-course offered under the auspices the [Summer Institute in Statistics and Modeling in Infectious Diseases](https://www.biostat.washington.edu/suminst/sismid/) by Edward Ionides and Aaron King each year from 2015 to 2023.
+  Materials for this course are [available on Github](https://kingaa.github.io/sbied/).
 
 - Carles Bret&oacute; assisted in 2018.
 
@@ -28,7 +29,7 @@ csl: jss.csl
 
 ---------------------
 
-[Course homepage](https://kingaa.github.io/sbied/)  
+[Course homepage](https://kingaa.github.io/serrapilheira/)  
 <a href="#" onclick="goBack()">Previous page</a>  
 
 ---------------------

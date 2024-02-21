@@ -4,7 +4,7 @@ list(prefix = "loglikest")
 library(tidyverse)
 library(pomp)
 set.seed(1221234211)
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 NP <- 10000
 NREPS <- 10

@@ -9,7 +9,7 @@ library(iterators)
 library(doFuture)
 plan(multisession)
 
-source("https://kingaa.github.io/sbied/pfilter/model.R")
+source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 read_csv("measles_params.csv") |>
   filter(!is.na(loglik), loglik.se<1) |>
@@ -21,7 +21,7 @@ coef(measSIR) |> mysignif(3) |> t() |> t() |> knitr::kable()
 
 
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/pfilter/bake.html
+## See https://kingaa.github.io/serrapilheira/misc/bake.html
 ## for an explanation.
 bake(file="fitall_local_search.rds",{
   foreach(i=1:8,.combine=c,
@@ -56,7 +56,7 @@ mifs_local |>
 
 
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/pfilter/bake.html
+## See https://kingaa.github.io/serrapilheira/misc/bake.html
 ## for an explanation.
 bake(file="fitall_lik_local.rds",{
   foreach(mf=mifs_local,.combine=rbind,
@@ -101,7 +101,7 @@ fixed_params <- coef(measSIR,c("N"))
 
 
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/pfilter/bake.html
+## See https://kingaa.github.io/serrapilheira/misc/bake.html
 ## for an explanation.
 bake(file="fitall_global_search.rds",
   dependson="guesses",{
@@ -191,7 +191,7 @@ freeze(
 
 
 ## What is this 'bake' function?
-## See https://kingaa.github.io/sbied/pfilter/bake.html
+## See https://kingaa.github.io/serrapilheira/misc/bake.html
 ## for an explanation.
 bake(file="fitall_eta_profile.rds",
   dependson="guesses",{
