@@ -1,5 +1,5 @@
 ---
-title: "Efficient scientific inference<br> using stochastic dynamical systems"
+title: "Stochastic processes<br> as scientific instruments:<br> efficient inference based on<br> stochastic dynamical systems"
 author: "Aaron A. King<br>University of Michigan"
 output: 
   ioslides_presentation:
@@ -15,7 +15,7 @@ nocite: |
 ---
 
 <!--
-Abstract: Scientific questions regarding the mechanistic operation of biological systems are often naturally formulated using Markov processes, but confronting the resulting models with data can be challenging. In this talk, I describe the essence of the difficulty, highlighting both the technical issues and the importance of the "plug-and-play property". I then describe some efficient inference approaches for partially observed Markov processes and illustrate these with examples. I conclude by sketching promising new developments and describing some open problems. 
+Abstract: Questions about the mechanistic operation of biological systems are naturally formulated as stochastic processes, but confronting such models with data can be challenging.  In this talk, I describe the essence of the difficulty, highlighting both the technical issues and the importance of the "plug-and-play property". I then illustrate some effective approaches to efficient inference based on such models. I conclude by sketching promising new developments and describing some open problems.
 -->
 
 <!--
@@ -48,12 +48,6 @@ source("../_includes/setup.R", local = knitr::knit_global())
 knitr::opts_chunk$set(echo=FALSE)
 ```
 ```{r prelims,include=FALSE,cache=FALSE}
-options(
-  keep.source=TRUE,
-  stringsAsFactors=FALSE,
-  encoding="UTF-8"
-  )
-
 set.seed(594709947L)
 library(tidyverse)
 library(scales)
@@ -66,29 +60,25 @@ library(pomp)
 
 ## Thanks
 
-- Felicia&nbsp;Magpantay, Matthieu&nbsp;Domenech&nbsp;de&nbsp;Cell&egrave;s, Carles&nbsp;Breto, Jennie&nbsp;Lavine, Daihai&nbsp;He
+- Felicia&nbsp;Magpantay, Matthieu&nbsp;Domenech&nbsp;de&nbsp;Cell&egrave;s, Carles&nbsp;Bret&oacute;, Jennie&nbsp;Lavine, Daihai&nbsp;He
 - Ed&nbsp;Ionides, Pej&nbsp;Rohani, Mercedes&nbsp;Pascual
 - US National Institutes of Health
 - US National Science Foundation
 - US NIH/DHS Research and Policy for Infectious Disease Dynamics Program
 - US National Center for Ecological Analysis and Synthesis & the "Inference for Mechanistic Models" Working Group
 
-## Theorem
+## Models have many uses
 
-Let $b$ be biology and $m$, mathematics.  
-Then $b$ is more interesting than $m$.
+- Organizing data
+- Developing theoretical principles
+- Exploring hypotheticals
+- Guiding policy
+- Explaining observed patterns
 
-### Proof
-
-$m$ is an activity of $M$, the set of mathematicians and computational scientists.
-$M\subset B$, where $B$ is the set of biological organisms.
-Therefore, $b$ is at least as interesting as $m$.
-Moreover, there is at least one element of $b$ that has not yet been mathematically understood.  
-Q.E.D.
 
 ## Mechanistic models as scientific instruments
 
-In seeking to understand biological phenomena, models are tools for looking at the data.
+In seeking to *understand* biological phenomena, models are tools for looking at the data.
 
 They focus attention on the discrepancies between our hypotheses and reality.
 
@@ -101,16 +91,18 @@ The key principle of statistics is that we must *model the error*.
 - In seeking to infer causal mechanism in *intact* biological systems, *dynamics* are especially informative.
 - Hypotheses about causal mechanisms can often readily be formalized as dynamical systems models.
 - The problems of inference
-	- How can we estimate unknown parameters?
-	- How can we decide among competing models?
-	- How can we extract maximum information from time series data?
-	- When do we know when we need a better model vs better data?
+    - How can we estimate unknown parameters?
+    - How can we decide among competing models?
+    - How can we extract maximum information from time series data?
+- When do we know when we need a better model vs better data?
 
 ## Sources of error
 
 The key principle is that we must model the error.
 
 - Measurement error
+	- Error
+	- Finite precision
 - Process noise
     - Environmental trends and fluctuations
     - Unmodeled heterogeneities
@@ -224,7 +216,7 @@ IndiaCholera |>
   labs(x=NULL,y="cholera deaths per month")
 ```
 
-## Questions
+## Scientific questions
 
 1. Relative importance of human-human vs environmental transmission
 1. Duration of infection-induced immunity
@@ -237,11 +229,6 @@ IndiaCholera |>
 ## Transmission models
 
 <img src="figs/onepath1.png" width=600>
-
-- nonlinear
-- stochastic
-- nonstationary
-- extrinsically driven
 
 ## Transmission models
 
@@ -267,14 +254,21 @@ IndiaCholera |>
 
 <img src="figs/phage1.png" width=600>
 
+## Transmission models
+
+- nonlinear
+- stochastic
+- nonstationary
+- extrinsically driven
+
 ## Mechanistic models
 
 - How well do each of the models explain the data?
 - What insights can we gain into the system's dynamic self-regulation?
 
-Note that the structure of the models corresponds to the questions of scientific interest, without regard to issues of mathematical tractability
+Note that the structure of the models corresponds to the questions of scientific interest, *without regard to issues of mathematical tractability*.
 
-## Questions
+## Scientific questions
 
 1. Relative importance of human-human vs environmental transmission
 1. Duration of infection-induced immunity
@@ -295,7 +289,7 @@ Note that the structure of the models corresponds to the questions of scientific
 [@DomenechdeCelles2016]
 
 
-## Question
+## Scientific question
 
 Why the resurgence?
 
@@ -567,11 +561,11 @@ Because the particle filter gives as unbiased, though noisy, estimate of the lik
 
 - main problem with particle filter: *particle depletion*
 - basic idea of iterated filtering:
-    - replace fixed parameters by parameters that execute a random walk, e.g.,
-    $$\theta \mapsto \theta_n \sim \mathrm{Normal}(\theta_{n-1},\sigma)$$
-    - this combats particle depletion by introducing variability
-    - also permits local exploration of the likelihood surface
-    - take $\sigma\to 0$ iteratively
+- replace fixed parameters by parameters that execute a random walk, e.g.,
+$$\theta \mapsto \theta_n \sim \mathrm{Normal}(\theta_{n-1},\sigma)$$
+- this combats particle depletion by introducing variability
+- also permits local exploration of the likelihood surface
+- take $\sigma\to 0$ iteratively
 - analogies with simulated annealing
 
 [@Ionides2006;@Ionides2015;@King2016]
@@ -731,6 +725,8 @@ Interpretation: in vaccinated hosts, infections are mild to asymptomatic, yet eq
 
 Flat profiles indicate lack of information in the data relative to the question
 
+**It is extremely useful to know *when you cannot know.***
+
 [@Magpantay2016]
 
 
@@ -780,7 +776,7 @@ Flat profiles indicate lack of information in the data relative to the question
 - It is essential to model the error, including both process noise and measurement error.
 - Plug-and-play inference methods facilitate scientific investigation.
 - Effective, statistically efficient plug-and-play inference methods are available.
-- There is an intense need for further methodological development of such methods to improve computational efficiency and accommodate new data types.
+- There is an abiding need for further methodological development of such methods to improve computational efficiency and accommodate new data types.
 
 <!-- ## Open problems -->
 
