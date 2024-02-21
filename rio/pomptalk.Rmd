@@ -1,5 +1,5 @@
 ---
-title: "Stochastic processes<br> as scientific instruments:<br> efficient inference based on<br> stochastic dynamical systems"
+title: "Efficient scientific inference<br> using stochastic dynamical systems"
 author: "Aaron A. King<br>University of Michigan"
 output: 
   ioslides_presentation:
@@ -149,7 +149,7 @@ The key principle is that we must model the error.
 $$
 \begin{aligned}
 dN_{XY}&=\lambda\,X\,dt+\sigma_{XY}(X)\,dW_1(t)\\
-dN_{X\emptyset}&=\mu\,X\,dt+\sigma_{X\emptyset}(X)\,dW_2(t)\\
+dN_{Y\emptyset}&=\mu\,Y\,dt+\sigma_{Y\emptyset}(Y)\,dW_2(t)\\
 \end{aligned}
 $$
 
@@ -161,9 +161,9 @@ $$dW_1,dW_2\;\stackrel{i.i.d}{\sim}\;\mathrm{Normal}(0,\sqrt{dt})$$
 
 $$
 \begin{aligned}
-dX&=B\,dt-dN_{XY}-dN_{X\emptyset}\\
-&=B\,dt-(\lambda+\mu)\,X\,dt\\
-&\qquad-\sigma_{XY}(X)\,dW_1(t)-\sigma_{X\emptyset}(X)\,dW_2(t)\\
+dX&=B\,dt-dN_{XY}-dN_{Y\emptyset}\\
+&=B\,dt-(\lambda+\mu)\,Y\,dt\\
+&\qquad-\sigma_{XY}(X)\,dW_1(t)-\sigma_{Y\emptyset}(Y)\,dW_2(t)\\
 dY&=dN_{XY}\\
 &=\lambda\,X\,dt+\sigma_{XY}(X)\,dW_1(t)\\
 \end{aligned}
