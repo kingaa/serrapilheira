@@ -1,5 +1,3 @@
-# REXE = Rscript --vanilla
-# For some reason, --vanilla fails on my Mac 
 REXE = Rscript --no-save --no-restore --no-init-file
 RBATCH = R CMD BATCH --no-save --no-restore
 PANDOC = pandoc -s -t html5+smart --mathjax
@@ -21,7 +19,7 @@ quiz.pdf quiz_soln.pdf: quiz_main.tex
 quiz.tex quiz_soln.tex quiz_main.tex	
 
 %.html: %.Rmd
-	$(REXE) -e "rmarkdown::render(\"$*.Rmd\",output_format=\"html_document\")"
+	$(REXE) -e "rmarkdown::render(\"$*.Rmd\")"
 
 %.md: %.Rmd
 	$(REXE) -e "rmarkdown::render(\"$*.Rmd\",output_format=\"md_document\")"
