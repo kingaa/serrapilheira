@@ -129,7 +129,7 @@ slope <- coef(fit1)[2]; slope
 Now, we know that measles' infectious period is about 2&nbsp;wk.
 Moreover, since this is far shorter than an average human life ($\mu\ll\gamma$), we can neglect $\mu$ in our estimating equation.
 Thus our estimate of $R_0$ is
-$$\hat{R_{0}}\;=\;\mathrm{slope}/\gamma+1\;\approx\;{`r signif(slope,2)`}\times{1}+1\;\approx\;{`r signif(slope*1+1,2)`}.$$
+$$\widehat{R_{0}}\;=\;\frac{\mathrm{slope}}{\gamma}+1\;\approx\;{`r signif(slope,2)`}\times{1}+1\;\approx\;{`r signif(slope*1+1,2)`}.$$
 
 Our strategy in this case has been to redefine the problem so that it fits a standard form, i.e., we showed how to rearrange the model so that the relevant quantity ($R_0$) could be obtained from linear regression.
 This means that all the usual diagnostics associated with linear regression are also available to check the fit of the model.
@@ -139,7 +139,7 @@ coef(summary(fit1))
 slope.se <- coef(summary(fit1))[2,2]
 slope.se
 ```
-So we reckon we've got an error of $\pm{`r signif(1*slope.se,1)`}$ in our estimate of $R_0$, i.e., we feel pretty confident that ${`r signif((slope-2*slope.se)*1+1,3)`}<R_{0}<{`r signif((slope+2*slope.se)*1+1,3)`}$.
+So we reckon we've got an error of $\pm{`r signif(1*slope.se,1)`}$ in our estimate of $R_0$, i.e., we feel reasonably confident that ${`r signif((slope-2*slope.se)*1+1,3)`}<R_{0}<{`r signif((slope+2*slope.se)*1+1,3)`}$.
 
 A defect of this method is that it uses only a small amount of the data to compute an important quantity.
 Moreover, we have to make a subjective judgement as to how much of the data to use.

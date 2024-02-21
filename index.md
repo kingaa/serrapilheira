@@ -64,4 +64,6 @@ Students new to **R** should complete a [tutorial](https://kingaa.github.io/R_Tu
 
 [**6. Case study: Ebola. Model diagnostics and forecasting.**](./ebola/index.html)
 
+[**Appendix: A gentle introduction to inference**](./parest/index.html)
+
 [**Miscellaneous materials**](./misc/index.html)
