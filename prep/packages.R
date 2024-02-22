@@ -40,6 +40,8 @@ BiocManager::install("ggtree")
 pkglist <- scan(
   what=character(0),
   text="
+bbmle
+broom
 coda
 colorspace
 cowplot
@@ -54,6 +56,7 @@ knitr
 mvtnorm
 nloptr
 scales
+stringi
 subplex
 tidyverse
 pomp

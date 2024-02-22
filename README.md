@@ -10,42 +10,11 @@ Windows users must also have the appropriate version of
 The `prep` directory contains scripts that will install other needed
 packages and test the user’s installation.
 
-The following **R** packages are needed to build the materials, but are
-not used *in* the materials:
-
--   **revealjs**
--   **diagram**
--   **mapproj**
-
 A [Github Action](https://github.com/kingaa/serrapilheira/actions)
 checks that these installations and actions succeed on a variety of
 current and legacy platforms:
 
 [![install-test](https://github.com/kingaa/serrapilheira/actions/workflows/install-test.yml/badge.svg)](https://github.com/kingaa/serrapilheira/actions/workflows/install-test.yml)
-
-------------------------------------------------------------------------
-
-### Manifest
-
--   index.md, index.html: Landing page
--   acknowledge.md, acknowledge.html: Acknowledgements
--   subdirectories:
-    -   prep: Lesson 0, on preparing for the course
-    -   intro: Lesson 1
-    -   stochsim: Lesson 2
-    -   pfilter: Lesson 3
-    -   mif: Lesson 4
-    -   measles: Lesson 5
-    -   ebola: Lesson 7
-    -   misc: Miscellaneous lessons
-    -   \_includes: latex, HTML, **R** files included in other files
-    -   graphics: figures in various formats
--   LICENSE.md: Full text of license
--   TODO.md: To-do list
--   Makefile, rules.mk: GNU Make files
--   course.bib: Bibliography database
--   jss.bst, jss.csl: Bibliography style files
--   CLUSTER.R: example `CLUSTER.R` file for site-specific cluster setup
 
 ------------------------------------------------------------------------
 
