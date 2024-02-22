@@ -4,32 +4,6 @@ rv <- getRversion()
 if (rv < minRversion)
   stop("R version >= ",minRversion," is required",call.=FALSE)
 
-## get list of packages to install
-pkglist <- scan(
-  what=character(0),
-  text="
-coda
-colorspace
-cowplot
-deSolve
-foreach
-iterators
-doFuture
-doRNG
-gridExtra
-gtable
-knitr
-mvtnorm
-nloptr
-scales
-subplex
-tidyverse
-pomp
-circumstance
-phylopomp
-"
-)
-
 lib <- Sys.getenv("R_LIBS_USER")
 
 inst_pkg <- function (pkglist, lib = Sys.getenv("R_LIBS_USER")) {
@@ -58,6 +32,35 @@ inst_pkg <- function (pkglist, lib = Sys.getenv("R_LIBS_USER")) {
   options(op)
   invisible(NULL)
 }
+
+inst_pkg("BiocManager")
+BiocManager::install("ggtree")
+
+## get list of packages to install
+pkglist <- scan(
+  what=character(0),
+  text="
+coda
+colorspace
+cowplot
+deSolve
+foreach
+iterators
+doFuture
+doRNG
+gridExtra
+gtable
+knitr
+mvtnorm
+nloptr
+scales
+subplex
+tidyverse
+pomp
+circumstance
+phylopomp
+"
+)
 
 inst_pkg(pkglist,lib=lib)
 cat("first set of packages installed successfully to user directory\n\t(",lib,")!\n")
