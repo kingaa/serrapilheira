@@ -1,5 +1,5 @@
 ---
-title: On the Conversation between Scientist and Data
+title: Stochastic mechanistic models<br>as scientific instruments
 author: |
   Aaron A. King<br>
   University of Michigan
@@ -15,40 +15,6 @@ params:
 nocite: |
   @Lavine2011, @DomenechdeCelles2016, @DomenechdeCelles2018
 ---
-
-<!--
-Abstract: As scientists, we ask questions of data.
-Whether and how the data choose to reply depends on how the question is posed, and we often struggle to pose just the right question.
-How can we best ask the questions so that the answers are least clouded by assumptions of convenience or tradition?
-How can we tell when the assumptions we must make are getting in the way of what the data want to say? 
-In this talk, I will be interested in modeling methods that distort the communication channels as little as possible and in procedures by which we can recognize when the data are trying to tell us that we are asking the wrong
-question.
--->
-
-<!--
-LONG ABSTRACT
-
-Many important questions in the epidemiology and ecology of communicable diseases are naturally formulated as questions about the structure and parameterization of dynamical systems models.
-Retrospective analyses of data on recurrent outbreaks of such infections can yield answers to these questions, provided one can construct a tight connection between a stochastic model and data.
-Because of the centrality of questions regarding model structure, however, and due to the general intractability of most models of interest, there is great value in methods that place minimal restrictions on the form of models and allow comparison of the explanatory and predictive power of disparate models on an efficient and objective basis.
-In this talk, I first give examples of some questions of this nature drawn from the epidemiology of pertussis, cholera, and polio [@King2008;@Magpantay2016;@Martinez-Bakker2015].
-Key issues involve route or mode of transmission, the nature, strength, and durability of infection- and vaccine-induced immunity, and the ecological mechanisms promoting persistence and resisting eradication of the pathogen.
-
-In the next part of the talk, I motivate and explain the concept of ``plug-and-play'' inference algorithms and highlight three particularly useful algorithms from this class:  
-1. particle Markov chain Monte Carlo [@Andrieu2010]
-1. synthetic likelihood [@Wood2010;@Fasiolo2014], and
-1. iterated filtering [@Ionides2015].
-
-For each of these methods, I explain its key principles, sketch the algorithm structure, and describe its advantages and disadvantages in terms of statistical and computational efficiency.
-These methods compare favorably to the ``standard'' and time-honored approaches of data-augmentation Markov chain Monte Carlo and the various Kalman filter extensions and have appreciable advantages over newer methods such as approximate Bayesian computation @Toni2009a.
-On the other hand, they can be computationally demanding and face considerable challenges in dealing with high-dimensional data.
-I argue that, on balance, there is much to be gained from the capacity to effectively explore the complex, high-dimensional, nonlinear likelihood surfaces associated with questions of scientific interest.
-Doing so is greatly facilitated by the availability of software implementing these, and other, plug-and-play algorithms within a flexible modeling environment [@King2016].
-
-To conclude the talk, I demonstrate iterated filtering in practice as a method for answering some of the questions raised in the first part of the talk.
-In particular, I show how the likelihood profile and associated tools can be used not only to quantify statistical support for scientific findings but to shed light on how nonlinearity and stochasticity interact to shape infectious disease dynamics.
--->
-
 
 ```{r knitr-opts,include=FALSE,purl=FALSE,cache=FALSE}
 source("../_includes/setup.R", local = knitr::knit_global())
@@ -66,55 +32,56 @@ library(bbmle)
 library(pomp)
 ```
 
-## Thanks
+## Models have many uses
 
-- Felicia&nbsp;Magpantay, Matthieu&nbsp;Domenech&nbsp;de&nbsp;Cell&egrave;s, Carles&nbsp;Bret&oacute;, Jennie&nbsp;Lavine, Daihai&nbsp;He
-- Ed&nbsp;Ionides, Pej&nbsp;Rohani, Mercedes&nbsp;Pascual
-- US National Institutes of Health
-- US National Science Foundation
-- US NIH/DHS Research and Policy for Infectious Disease Dynamics Program
-- US National Center for Ecological Analysis and Synthesis & the "Inference for Mechanistic Models" Working Group
-
-## The dialogue between scientist and Nature
-
-- We have questions about the causes of things...
-- ...but Nature does not answer our questions directly.
-
-## The dialogue between scientist and Nature
-
-Q: *"How will the distribution and prevalence of a given infection change with climate?"*
-
-A: "That depends...."
-
-Q: *"Can we eradicate a given infectious disease using a given vaccine?"*
-
-A: "That depends...."
+- Organizing data
+- Developing theoretical principles
+- Exploring hypotheticals
+- Guiding policy
+- Explaining observed patterns
 
 
-## The dialogue between scientist and Nature
+## Mechanistic models as scientific instruments
 
-Q: *"How do climate conditions and their fluctuations affect the distribution and prevalence of a given infectious disease?"*
+In seeking to *understand* biological phenomena, models are tools for looking at the data.
 
-A: "That depends...."
+They focus attention on the discrepancies between our hypotheses and reality.
 
-Q: *"Does infection by a given infectious disease confer immunity against reinfection?"*
+How to quantify these discrepancies?
 
-A: "That depends...."
+The key principle of statistics is that we must *model the error*.
 
+## Mechanistic models as scientific instruments
 
-## The dialogue between scientist and Nature
+- In seeking to infer causal mechanism in *intact* biological systems, *dynamics* are especially informative.
+- Hypotheses about causal mechanisms can often readily be formalized as dynamical systems models.
+- The problems of inference
+    - How can we estimate unknown parameters?
+    - How can we decide among competing models?
+    - How can we extract maximum information from time series data?
+- When do we know when we need a better model vs better data?
 
-Q: *"Are climatic differences responsible for differences in the epidemiology in different locations?"*
+## Sources of error
 
-A: "To a degree...."
+The key principle is that we must model the error.
 
-Q: *"Does the peak of the epidemic occur because of the build-up of herd immunity?"*
+- Measurement error
+	- Error
+	- Finite precision
+- Process noise
+    - Environmental trends and fluctuations
+    - Unmodeled heterogeneities
+    - Model misspecification
+    - Unmodeled variables
 
-A: "To some extent...."
+## Overview
 
-Q: *"Does the peak of the epidemic result from the turn of the season?"*
-
-A: "To some degree...."
+1. Markov models
+1. Examples: cholera and pertussis
+1. Partially observed Markov processes
+1. Plug and play inference methods
+1. Plug and play methods in practice
+1. Conclusions and recommendations
 
 ## The dialogue between scientist and Nature
 
@@ -543,6 +510,12 @@ Post-vaccination infections are observed at a reduced rate, $\eta$.
 - Questions of parameter estimation and model selection
 
 [@DomenechdeCelles2018]
+
+## Partially observed Markov processes
+
+```{tikz pomp_schematic,fig.ext="png",out.width="90%"}
+\input{../graphics/state_space_diagram2}
+```
 
 ## Partially observed Markov processes
 

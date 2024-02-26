@@ -41,17 +41,17 @@ and the time required for their computation on a linux cluster with
 <tr class="odd">
 <td style="text-align: left;">measles/results</td>
 <td style="text-align: right;">340</td>
-<td style="text-align: right;">224.0</td>
+<td style="text-align: right;">219.3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">mif/results</td>
 <td style="text-align: right;">2244</td>
-<td style="text-align: right;">67.6</td>
+<td style="text-align: right;">67.2</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">pfilter/results</td>
 <td style="text-align: right;">142</td>
-<td style="text-align: right;">13.2</td>
+<td style="text-align: right;">18.9</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ebola/results</td>
@@ -64,7 +64,7 @@ and the time required for their computation on a linux cluster with
 The archives amount to about 5 MB.
 
 Full compilation, i.e., rebuilding the complete set of materials
-following deletion of all archives, requires about 320 min on a
+following deletion of all archives, requires about 321 min on a
 250-processor cluster. Full compilation regenerates the complete set of
 archives. A finishing compilation, i.e., rebuilding with all archives in
 place, but with the re-Making of all documents, requires about 12 min on

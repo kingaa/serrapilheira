@@ -1,4 +1,5 @@
 \input{header}
+\usetikzlibrary{shapes,arrows.meta,positioning,calc,backgrounds}
 
 \mode<beamer>{\usetheme{AnnArbor}}
 \mode<beamer>{\setbeamertemplate{footline}}
@@ -126,14 +127,19 @@ source("../_includes/setup.R", local = knitr::knit_global())
 \end{frame}
 
 \begin{frame}{Schematic of the structure of a POMP}
+
   \begin{itemize}
   \item Arrows in the following diagram show causal relations.
   \item A key perspective to keep in mind is that \myemph{the model is to be viewed as the process that generated the data}.
   \item That is: the data are viewed as one realization of the model's stochastic process.
   \end{itemize}
+
   \begin{center}
-    \includegraphics[height=4cm]{../graphics/pomp_schematic1.png}
+    \resizebox{0.6\textwidth}{!}{
+      \input{../graphics/state_space_diagram1}
+    }
   \end{center}
+
 \end{frame}
 
 \begin{frame}{Notation for POMP models}
@@ -152,8 +158,13 @@ source("../_includes/setup.R", local = knitr::knit_global())
 \end{frame}
 
 \begin{frame}{Another POMP model schematic}
-  <<ssdiag2,child="../graphics/state_space_diagram2.Rnw",echo=FALSE,purl=FALSE,fig.height=3,fig.width=6,out.width="0.7\\textwidth">>=
-  @
+
+  \begin{center}
+    \resizebox{0.7\textwidth}{!}{
+      \input{../graphics/state_space_diagram2}
+    }
+  \end{center}
+  
   \begin{itemize}
   \item The state process, $X_n$, is Markovian, i.e.,
     \begin{equation*}

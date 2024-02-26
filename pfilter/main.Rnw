@@ -130,8 +130,9 @@ set.seed(1350254336)
   \item Moreover, the distribution of the measurement $Y_{n}$, conditional on $X_{n}$, is independent of all other variables.
   \end{itemize}
 
-  <<ssdiag2,child="../graphics/state_space_diagram2.Rnw",echo=FALSE,purl=FALSE,fig.height=3,fig.width=6>>=
-  @
+  \resizebox{0.9\textwidth}{!}{
+    \input{../graphics/state_space_diagram2}
+  }
 
   \framebreak
 

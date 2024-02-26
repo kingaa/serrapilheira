@@ -10,8 +10,6 @@ set.seed(1350254336)
 
 
 
-
-
 source("https://kingaa.github.io/serrapilheira/pfilter/model.R")
 
 library(pomp)
