@@ -7,6 +7,7 @@ output:
   ioslides_presentation:
     self_contained: true
     css: pomptalk.css
+    widescreen: true
     smart: true
 bibliography: ../course.bib
 csl: ../jss.csl
@@ -32,56 +33,14 @@ library(bbmle)
 library(pomp)
 ```
 
-## Models have many uses
+## Models have many uses in ecology
 
 - Organizing data
 - Developing theoretical principles
 - Exploring hypotheticals
-- Guiding policy
 - Explaining observed patterns
-
-
-## Mechanistic models as scientific instruments
-
-In seeking to *understand* biological phenomena, models are tools for looking at the data.
-
-They focus attention on the discrepancies between our hypotheses and reality.
-
-How to quantify these discrepancies?
-
-The key principle of statistics is that we must *model the error*.
-
-## Mechanistic models as scientific instruments
-
-- In seeking to infer causal mechanism in *intact* biological systems, *dynamics* are especially informative.
-- Hypotheses about causal mechanisms can often readily be formalized as dynamical systems models.
-- The problems of inference
-    - How can we estimate unknown parameters?
-    - How can we decide among competing models?
-    - How can we extract maximum information from time series data?
-- When do we know when we need a better model vs better data?
-
-## Sources of error
-
-The key principle is that we must model the error.
-
-- Measurement error
-	- Error
-	- Finite precision
-- Process noise
-    - Environmental trends and fluctuations
-    - Unmodeled heterogeneities
-    - Model misspecification
-    - Unmodeled variables
-
-## Overview
-
-1. Markov models
-1. Examples: cholera and pertussis
-1. Partially observed Markov processes
-1. Plug and play inference methods
-1. Plug and play methods in practice
-1. Conclusions and recommendations
+- Guiding policy
+- Making forecasts
 
 ## The dialogue between scientist and Nature
 
@@ -100,22 +59,36 @@ The key principle is that we must model the error.
 
 ## The dialogue between scientist and Nature
 
-- We have questions about the causes of things...
-- ...but Nature does not answer our questions directly.
-- We must propose hypothetical answers to our questions.
-- Models are nothing other than hypothetical answers to questions we ask.
-- Models are necessarily only *partial* answers.
+- It is relatively easy to ask difficult questions.
+- It is harder, but still relatively easy, to propose creative hypothetical answers.
+
+## The dialogue between scientist and Nature
+
 - It is relatively easy to ask difficult questions.
 - It is harder, but still relatively easy, to propose creative hypothetical answers.
 - It is often much more difficult to hear what the data have to say.
 
 ## The dialogue between scientist and Nature
 
+- It is relatively easy to ask difficult questions.
+- It is harder, but still relatively easy, to propose creative hypothetical answers.
+- It is often much more difficult to hear what the data have to say.
 - Before the data will give a response, they must be asked in the proper way.
 - Their responses are always equivocal, but some answers are better than others.
 - One difficulty: how do we quantify this?
 - Another difficulty: the answer we get depends on the question we ask.  
   How do we avoid misunderstanding the reply?
+
+
+## Mechanistic models as scientific instruments
+
+In seeking to *understand* biological phenomena, models are tools for looking at the data.
+
+They focus attention on the discrepancies between our hypotheses and reality.
+
+How to quantify these discrepancies?
+
+<!-- The key principle of statistics is that we must *model the error*. -->
 
 ## Quantifying discrepancy between model and data
 
@@ -201,85 +174,24 @@ pl+scale_y_log10()+expand_limits(y=c(0.2,700))
 - Thus, properly speaking, a model is a *probability distribution*.
 - We must model the *noise* and the *error*.
 
-## Sources of noise and error
+## Mechanistic models as scientific instruments
 
-- Measurement error
-- Process noise
-    - Environmental trends and fluctuations
-    - Unmodeled heterogeneities
-    - Model misspecification
-    - Unmodeled variables
+- In seeking to infer causal mechanism in *intact* biological systems, *dynamics* are especially informative.
+- Hypotheses about causal mechanisms can often readily be formalized as dynamical systems models.
+- The problems of inference
+    - How can we estimate unknown parameters?
+    - How can we decide among competing models?
+    - How can we extract maximum information from time series data?
+- When do we know when we need a better model vs better data?
 
-## Stochastic models
+## Overview
 
-<img src="figs/compartment1.png" height=400>
-
-## Stochastic models
-
-<img src="figs/compartment2.png" height=400>
-
-## Stochastic models
-
-<img src="figs/compartment3.png" height=400>
-
-## Stochastic models
-
-<img src="figs/compartment4.png" height=400>
-
-## Stochastic models
-
-<img src="figs/compartment5.png" height=400>
-
-## Stochastic models
-
-<img src="figs/compartment6.png" height=150>
-
-$$
-\begin{aligned}
-N_{\emptyset{X}}(t)&=\text{cumulative number of births into X by time $t$}\\
-N_{XY}(t)&=\text{cumulative number of X $\to$ Y movements by time $t$}\\
-N_{Y\emptyset}(t)&=\text{cumulative number of Y $\to$ $\emptyset$ movements by time $t$}\\
-\end{aligned}
-$$
-
-## Stochastic models
-
-<img src="figs/compartment6.png" height=150>
-
-$$
-\begin{aligned}
-dN_{\emptyset{X}}&=B(t)\,dt \phantom{+\sigma_1(t)\,dW_1(t)}\\
-dN_{XY}&=\lambda(Y)\,X\,dt \phantom{+\sigma_2(X,Y)\,dW_2(t)}\\
-dN_{Y\emptyset}&=\mu\,Y\,dt \phantom{+\sigma_3(Y)\,dW_3(t)}\\
-\end{aligned}
-$$
-
-## Stochastic models
-
-<img src="figs/compartment6.png" height=150>
-
-$$
-\begin{aligned}
-dN_{\emptyset{X}}&=B(t)\,dt +\sigma_1(t)\,dW_1(t)\\
-dN_{XY}&=\lambda(Y)\,X\,dt +\sigma_2(X,Y)\,dW_2(t)\\
-dN_{Y\emptyset}&=\mu\,Y\,dt +\sigma_3(Y)\,dW_3(t)\\
-\end{aligned}
-$$
-
-$$dW_i\;\stackrel{i.i.d}{\sim}\;\mathrm{Normal}(0,\sqrt{dt})$$
-
-## Stochastic models
-
-<img src="figs/compartment6.png" height=150>
-
-$$
-\begin{aligned}
-dX&=B(t)\,dt-dN_{XY}\\
-&=B(t)\,dt-\lambda(Y)\,X\,dt+\sigma_1(t)\,dW_1(t)-\sigma_2(X,Y)\,dW_2(t)\\
-dY&=dN_{XY}-dN_{Y\emptyset}\\
-&=\lambda(Y)\,X\,dt+\sigma_2(X,Y)\,dW_2(t)+\sigma_3(X)\,dW_3(t)\\
-\end{aligned}
-$$
+1. Markov models
+1. Examples: cholera and pertussis
+1. Partially observed Markov processes
+1. Plug and play inference methods
+1. Plug and play methods in practice
+1. Conclusions and recommendations
 
 ## Endemic cholera
 
@@ -338,31 +250,31 @@ IndiaCholera |>
 
 ## Transmission models for endemic cholera
 
-<img src="figs/onepath1.png" height=400>
+<img src="figs/onepath1.png" height=500>
 
 ## Transmission models for endemic cholera
 
-<img src="figs/onepath2.png" height=400>
+<img src="figs/onepath2.png" height=500>
 
 ## Transmission models for endemic cholera
 
-<img src="figs/onepath3.png" height=400>
+<img src="figs/onepath3.png" height=500>
 
 ## Transmission models for endemic cholera
 
-<img src="figs/onepath4.png" height=400>
+<img src="figs/onepath4.png" height=500>
 
 ## Transmission models for endemic cholera
 
-<img src="figs/onepath5.png" height=400>
+<img src="figs/onepath5.png" height=500>
 
 ## Transmission models for endemic cholera
 
-<img src="figs/onepath6.png" height=400>
+<img src="figs/onepath6.png" height=500>
 
 ## Transmission models for endemic cholera
 
-<img src="figs/phage1.png" height=400>
+<img src="figs/phage1.png" height=500>
 
 ## Transmission models for endemic cholera
 
@@ -476,29 +388,29 @@ Post-vaccination infections are observed at a reduced rate, $\eta$.
 
 [@DomenechdeCelles2018]
 
-<!-- ## Time-varying covariates -->
+## Time-varying vaccination rates
 
-<!-- <img src="figs/vaccination_rates.png" height=400>   -->
+<img src="figs/vaccination_rates.png" height=400>
 
-<!-- [@DomenechdeCelles2018] -->
+[@DomenechdeCelles2018]
 
-<!-- ## Time-varying covariates -->
+## Time-varying demographic rates
 
-<!-- <img src="figs/mass_demography.png" height=400>   -->
+<img src="figs/mass_demography.png" height=400>
 
-<!-- [@DomenechdeCelles2018] -->
+[@DomenechdeCelles2018]
 
-<!-- ## Age-structured contact network -->
+## Age-specific contact rates
 
-<!-- <img src="figs/age-contact.jpg" height=400>   -->
+<img src="figs/age-contact.jpg" height=400>
 
-<!-- [@Rohani2010a;@DomenechdeCelles2018] -->
+[@Rohani2010a;@DomenechdeCelles2018]
 
-<!-- ## Age-structured contact network -->
+## Age-specific contact rates
 
-<!-- <img src="figs/contact_matrices.png" height=400>   -->
+<img src="figs/contact_matrices.png" height=400>
 
-<!-- [@Mossong2008;@Fumanelli2012] -->
+[@Mossong2008;@Fumanelli2012]
 
 
 ## Modes of vaccine failure
@@ -511,11 +423,89 @@ Post-vaccination infections are observed at a reduced rate, $\eta$.
 
 [@DomenechdeCelles2018]
 
-## Partially observed Markov processes
+## Sources of error
 
-```{tikz pomp_schematic,fig.ext="png",out.width="90%"}
-\input{../graphics/state_space_diagram2}
-```
+The key principle is that we must model the error.
+
+- Measurement error
+	- Error
+	- Finite precision
+- Process noise
+    - Environmental trends and fluctuations
+    - Unmodeled heterogeneities
+    - Model misspecification
+    - Unmodeled variables
+
+<!-- ## Stochastic models -->
+
+<!-- <img src="figs/compartment1.png" height=400> -->
+
+<!-- ## Stochastic models -->
+
+<!-- <img src="figs/compartment2.png" height=400> -->
+
+<!-- ## Stochastic models -->
+
+<!-- <img src="figs/compartment3.png" height=400> -->
+
+<!-- ## Stochastic models -->
+
+<!-- <img src="figs/compartment4.png" height=400> -->
+
+<!-- ## Stochastic models -->
+
+<!-- <img src="figs/compartment5.png" height=400> -->
+
+<!-- ## Stochastic models -->
+
+<!-- <img src="figs/compartment6.png" height=150> -->
+
+<!-- $$ -->
+<!-- \begin{aligned} -->
+<!-- N_{\emptyset{X}}(t)&=\text{cumulative number of births into X by time $t$}\\ -->
+<!-- N_{XY}(t)&=\text{cumulative number of X $\to$ Y movements by time $t$}\\ -->
+<!-- N_{Y\emptyset}(t)&=\text{cumulative number of Y $\to$ $\emptyset$ movements by time $t$}\\ -->
+<!-- \end{aligned} -->
+<!-- $$ -->
+
+<!-- ## Stochastic models -->
+
+<!-- <img src="figs/compartment6.png" height=150> -->
+
+<!-- $$ -->
+<!-- \begin{aligned} -->
+<!-- dN_{\emptyset{X}}&=B(t)\,dt \phantom{+\sigma_1(t)\,dW_1(t)}\\ -->
+<!-- dN_{XY}&=\lambda(Y)\,X\,dt \phantom{+\sigma_2(X,Y)\,dW_2(t)}\\ -->
+<!-- dN_{Y\emptyset}&=\mu\,Y\,dt \phantom{+\sigma_3(Y)\,dW_3(t)}\\ -->
+<!-- \end{aligned} -->
+<!-- $$ -->
+
+<!-- ## Stochastic models -->
+
+<!-- <img src="figs/compartment6.png" height=150> -->
+
+<!-- $$ -->
+<!-- \begin{aligned} -->
+<!-- dN_{\emptyset{X}}&=B(t)\,dt +\sigma_1(t)\,dW_1(t)\\ -->
+<!-- dN_{XY}&=\lambda(Y)\,X\,dt +\sigma_2(X,Y)\,dW_2(t)\\ -->
+<!-- dN_{Y\emptyset}&=\mu\,Y\,dt +\sigma_3(Y)\,dW_3(t)\\ -->
+<!-- \end{aligned} -->
+<!-- $$ -->
+
+<!-- $$dW_i\;\stackrel{i.i.d}{\sim}\;\mathrm{Normal}(0,\sqrt{dt})$$ -->
+
+<!-- ## Stochastic models -->
+
+<!-- <img src="figs/compartment6.png" height=150> -->
+
+<!-- $$ -->
+<!-- \begin{aligned} -->
+<!-- dX&=B(t)\,dt-dN_{XY}\\ -->
+<!-- &=B(t)\,dt-\lambda(Y)\,X\,dt+\sigma_1(t)\,dW_1(t)-\sigma_2(X,Y)\,dW_2(t)\\ -->
+<!-- dY&=dN_{XY}-dN_{Y\emptyset}\\ -->
+<!-- &=\lambda(Y)\,X\,dt+\sigma_2(X,Y)\,dW_2(t)+\sigma_3(X)\,dW_3(t)\\ -->
+<!-- \end{aligned} -->
+<!-- $$ -->
 
 ## Partially observed Markov processes
 
@@ -541,6 +531,12 @@ Post-vaccination infections are observed at a reduced rate, $\eta$.
 
 <img src="figs/pomp5.png" height=450>  
 [@King2016]
+
+## Partially observed Markov processes
+
+```{tikz pomp_schematic,fig.ext="png",out.width="90%"}
+\input{../graphics/state_space_diagram2}
+```
 
 ## The &ldquo;plug-and-play&rdquo; property
 
@@ -719,174 +715,9 @@ duration of immunity $1.5 \pm 0.7~\text{yr}$
 - Effective, maximally efficient inference methods are available.
 - There is an intense need for further methodological development of such methods to improve computational efficiency and accommodate new data types.
 
-<!-- ## Open problems -->
-
-<!-- - New data types: -->
-<!-- 	- genetic data -->
-<!-- - High-dimensional data -->
-<!-- 	- panel data -->
-<!-- 	- spatio-temporal data -->
-<!-- - Computational challenges -->
-<!-- 	- parallelization -->
-<!-- 	- online inference -->
-
-## 
-
-## Common model comparison criteria
-
-- The best model agrees with already published results.
-- The best model is the one that I can estimate before my thesis is due.
-- The best model is the one that best agrees with my preconceptions.
-- The best model is the one that makes my supervisor the happiest.
-- An identifiable model is better than a non-identifiable model.
-- The best model is the one with the narrowest confidence intervals.
-- The best model is the one with the lowest AIC (or BIC, or ....).
-
-## Valid model comparison criteria
-
-- *How well* does the model fit the data?
-    - How does the likelihood compare to benchmark values?
-    - Does the model fit well? (fitting best $\ne$ fitting well)
-- *How* does the model explain the data?
-    - What aspects of the data are explained?
-    - What aspects are ascribed to noise?
-	- What do the parameter estimates predict about the system?
-- How *adequate* is the model?
-    - Are the data consistent with the model's assumptions?
-    - If the model were correct, how plausible are the data?
-	- How sensitive are the estimates to model assumptions?
-
-## Valid model comparison criteria
-
-- Predictive power
-    - Can the model make accurate out-of-sample predictions?
-- What predictions to parameter estimates make about the results of independent studies?
-- Fertility
-    - Does the model make testable predictions?
-
-## Partially observed Markov processes
-
-- observation times: $t_1 < t_2 < \dots < t_N$
-- data: $y_{t_n}^*$
-- unobserved Markov state process: $X_t$
-- measurement process: $Y_t$
-- process model (Markov state transition density): $f_n(X_{t_n}|X_{t_{n-1}},\theta)$
-- measurement model: $g_n(Y_{t_n}|X_{t_{n-1}},\theta)$
-- initial state distribution $f_0(X_{t_0},\theta)$
-
-[@King2016]
-
-## Central problem
-
-The full joint density is:
-
-$$f_{X,Y}(x,y;\theta) = f_0(x_0;\theta)\,\prod_{n=1}^N\!f_{n}(x_n|x_{n-1};\theta)\,g_{n}(y_n|x_n;\theta).$$
-
-The likelihood function is the marginal density for $Y$, evaluated at the data:
-
-$$
-\begin{split}
-\mathcal{L}(\theta)&=f_{Y}(y^*_1,\dots,y^*_n;\theta)\\
-&=\int f_{X,Y}(x_0,\dots,x_N,y^*_1,\dots,y^*N;\theta)\, dx_1\cdots dx_n.
-\end{split}
-$$
-
-
-## Synthetic likelihood
-
-Given parameters $\theta\in\Theta$ and data $y^*\in\mathcal{Y}$
-
-- Select probes (summary statistics), $\mathbb{S}:\mathcal{Y}\to\mathbb{R}^d$
-- Compute observed probes, $s^* = \mathbb{S}(y^*)$
-- Simulate $J$ datasets $y_j$ and compute simulated probes $s_j=\mathbb{S}(y_j)$
-- Using sample mean, $\mu = \langle s_j \rangle$, and variance, $\Sigma = \langle (s_j-\mu)\,(s_j-\mu)^T \rangle$, compute the synthetic log likelihood
-$$\ell_{\mathbb{S}}(\theta) = -\tfrac{1}{2}\,(s^*-\mu)^{T}{\Sigma}^{-1}(s^*-\mu)-\tfrac{1}{2}\,\log((2\pi)^d|\Sigma|)$$
-- E.g., maximize $\ell_{\mathbb{S}}$ over $\Theta$
-
-[@Wood2010;@Fasiolo2014]
-
-## The particle filter
-
-- Given $\theta$ and $y^*$, initialize particle swarm by drawing $X^F_{t_0,j}\sim f_0(\cdot|\theta)$, $j=1,\dots,J$
-- For $n = 1,\dots,N$,
-    - Simulate for prediction: $X^P_{t_{n},j}\sim f_k(\cdot|X^F_{t_{n-1},j},\theta)$
-    - Evaluate weights: $w_{n,j} = g(y^*_{t_{n}}|X^P_{t_{n},j},\theta)$
-    - Perform weighted resample of $\{X^P_{t_n,j}\}_{j=1}^J$ to obtain $\{X^F_{t_n,j}\}_{j=1}^J$
-    - Estimate conditional log likelihood: $\ell_{n}(\theta) = \log\mathrm{Prob}[y^*_{t_n}|y^*_{t_1},\dots,y^*_{t_{n-1}}] = \log\tfrac{1}{J}\sum_j\!w_{n,j}$
-- Unbiased estimate of the log likelihood: $\ell(\theta) = \sum_n\,\ell_n(\theta)$
-
-[@Arulampalam2002]
-
-## Particle Markov chain Monte Carlo
-
-- Given $\theta_0$, compute $\ell(\theta_0)$ using the PF
-- For $m>0$, draw $\theta^P_m\sim q(\cdot|\theta_{m-1})$
-- Compute $\ell(\theta^P_m)$ using the PF
-- Generate $U\sim\mathrm{Uniform}(0,1)$
-- Set $\theta_m=\begin{cases}\theta^P_m, &\text{if } U<\frac{f_\Theta(\theta^P_m)\exp(\ell(\theta^P_m))}{f_\Theta(\theta_{m-1})\exp(\ell(\theta_{m-1}))},\\ \theta_{m-1},&\text{otherwise.}\end{cases}$
-- Repeat until the Markov chain converges
-
-Because the particle filter gives as unbiased, though noisy, estimate of the likelihood, this MCMC converges to the correct target distribution.
-
-[@Andrieu2010]
-
-## Iterated filtering
-
-- main problem with particle filter: *particle depletion*
-- basic idea of iterated filtering:
-- replace fixed parameters by parameters that execute a random walk, e.g.,
-$$\theta \mapsto \theta_n \sim \mathrm{Normal}(\theta_{n-1},\sigma)$$
-- this combats particle depletion by introducing variability
-- also permits local exploration of the likelihood surface
-- take $\sigma\to 0$ iteratively
-- analogies with simulated annealing
-
-[@Ionides2006;@Ionides2015;@King2016]
-
-## Iterated filtering
-
-- Choose starting point $\theta_0$ and random-walk perturbations $\sigma_{m}$, $m=0,1,2,\dots$.
-- Initialize particle swarm by drawing $\theta^F_{j,0} \sim \mathrm{Normal}(\theta_0,\sigma_0)$
-- For $m>0$, run PF to obtain $\{\theta^F_{j,m}\}_{j=1}^J$
-- Repeat unto convergence
-- The $\theta^F$ converge to the maximum likelihood estimate of $\theta$
-
-[@Ionides2015]
-
-## Relative merits
-
-- SL throws away information, but gains robustness
-- Many choices are possible for SL probes, with consequences for inference
-- IF converges much faster than PMCMC
-- Frequentist vs Bayesian inference styles
-- Smoothed state trajectories can be computed by PMCMC
-- Probes can be used for *post hoc* checks of model adequacy
-
-## Recommendation: an integrated approach
-
-- Use IF, profile likelihood, and profile trace plots to identify heights in the likelihood surface.
-- Use PMCMC to obtain posterior densities and smoothed state trajectories if desired.
-- Use independent parameter estimates to diagnose model misspecification.
-- Use probes to ascertain model adequacy and diagnose model misspecification.
-
-## Exploiting the age structure
-
-<img src="figs/MDDC_2018_Table1.png" height=250>  
-
-<!--
-- 10% risk (95% CI [3–19%]) of protection waning within 10 y of vaccination
-- 55% have lifelong protection
-- primary vaccine failure probability of 4% [1–8%]
--->
-- relative transmissibility 0.99 [0.40–1.00]
-- relative observability 0.39 [0.19–1.00]
-- high detection rates in adolescents and in adults: 24% [10–66%]
-- despite effectiveness, eradication via routine immunization alone is not possible  
-[@DomenechdeCelles2018]
-
 ```{css}
 #references {
-    font-size: 50%;
+    font-size: 55%;
 }
 ```
 

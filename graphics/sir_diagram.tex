@@ -1,29 +1,45 @@
-%%%%% SIR diagram
-\begin{center}
-  \resizebox{0.65\textwidth}{!}{
-    \Large
-    \setlength{\unitlength}{5pt}
-    \begin{picture}(44,20)(-5,-4)
-      \thicklines
-      \put(0,0){\framebox(6,6){S}}
-      \put(16,0){\framebox(6,6){I}}
-      \put(32,0){\framebox(6,6){R}}
-      \put(-5,3){\vector(1,0){4}}
-      \put(-5,0){$\mu^{}_{BS}$}
-      \put(6,3){\vector(1,0){10}}
-      \put(9,0){$\mu_{SI}^{}$}
-      \put(11,4){\vector(0,1){5}}
-      \put(11.7,6){$\rho$}
-      \put(11,11.5){\circle{5}}
-      \put(9.8,10.6){{$C$}}
-      \put(3,-0.2){\vector(0,-1){4}}
-      \put(4,-3){$\mu^{}_{SD}$}
-      \put(19,-0.2){\vector(0,-1){4}}
-      \put(20,-3){$\mu^{}_{ID}$}
-      \put(22,3){\vector(1,0){10}}
-      \put(26,0){$\mu_{IR}^{}$}
-      \put(35,-0.2){\vector(0,-1){4}}
-      \put(36,-3){$\mu_{RD}^{}$}
-    \end{picture}
-  }
-\end{center}
+%% \documentclass[crop,tikz]{standalone}
+%% \begin{document}
+
+\definecolor{maize}{rgb}{1.0,0.796,0.020}
+\definecolor{darkblue}{rgb}{0,0.153,0.298}
+\definecolor{purple}{rgb}{0.518,0.082,0.765}
+\definecolor{darkgreen}{rgb}{0,0.392,0}
+\definecolor{royalblue}{rgb}{0.263,0.431,0.933}
+
+\begin{tikzpicture}[scale=1.3]
+  \usetikzlibrary{arrows.meta,positioning,calc}
+
+  \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+  \tikzstyle{meas}=[shape=circle, draw=royalblue, text=black, fill=white, very thick, minimum size=3em]
+  \tikzstyle{ibox}=[draw=darkgreen]
+  \tikzstyle{deme}=[fill=black!20!white]
+  \tikzstyle{label}=[font=\Large]
+  \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+  \tikzstyle{flow}=[draw=black, very thick, >=stealth]
+  \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
+  \tikzstyle{obs}=[draw=royalblue, thick, >=Circle]
+
+  \coordinate (origin) at (0,0);
+  \node [box] (S) at ($(origin)+(1,-1)$) {$S$};
+  \node [box,ibox] (I) at ($(S)+(2,0)$) {$I$};
+  \node [box] (R) at ($(I)+(2,0)$) {$R$};
+  \node [meas] (C) at ($(R)+(0,-1)$) {$C$};
+  \coordinate (overR) at ($(R)+(0,1)$);
+  \coordinate (midSI) at ($(S)!0.5!(I)$);
+  \coordinate (midIR) at ($(I)!0.5!(R)$);
+  \coordinate (source) at ($(S)+(-1.4,0)$);
+  \coordinate (sinkS) at ($(S)+(1,1)$);
+  \coordinate (sinkI) at ($(I)+(1,1)$);
+  \coordinate (sinkR) at ($(R)+(1,1)$);
+  \draw [obs,->] (midIR) .. controls ($(midIR)+(0,-1)$) and ($(C)+(-1,0)$) .. (C);
+  \draw [flow,->] (S) -- (I) node[midway,below,sloped] {$\mu^{}_{SI}$};
+  \draw [flow,->] (I) -- (R) node[midway,above,sloped,text=darkgreen] {$\mu^{}_{IR}$};
+  \draw [flow,->] (source) -- (S) node[midway,above,sloped] {$\mu^{}_{BS}$};
+  \draw [flow,->] (S.north east) -- (sinkS) node[midway,above,sloped] {$\mu^{}_{SD}$};
+  \draw [flow,->] (I.north east) -- (sinkI) node[midway,above,sloped] {$\mu^{}_{ID}$};
+  \draw [flow,->] (R.north east) -- (sinkR) node[midway,above,sloped] {$\mu^{}_{RD}$};
+  \draw [modulate,->] (I.north west) .. controls ($(I)+(-0.8,0.8)$) and ($(midSI)+(0,0.5)$) .. (midSI);
+
+\end{tikzpicture}
+%% \end{document}

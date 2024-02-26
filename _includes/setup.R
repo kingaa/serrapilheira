@@ -14,7 +14,7 @@ opts_chunk$set(
   dpi=300,
   error=FALSE,
   fig.align="center",
-  fig.height=4,fig.width=6.83,
+  fig.dim=c(6.83,4),
   fig.lp="fig:",
   fig.path=paste("tmp",as.character(params$prefix),"figure","",sep="/"),
   fig.pos="h!",

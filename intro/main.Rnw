@@ -135,9 +135,7 @@ source("../_includes/setup.R", local = knitr::knit_global())
   \end{itemize}
 
   \begin{center}
-    \resizebox{0.6\textwidth}{!}{
-      \input{../graphics/state_space_diagram1}
-    }
+    \includegraphics[width=0.6\textwidth]{../graphics/state_space_diagram1-crop}
   \end{center}
 
 \end{frame}

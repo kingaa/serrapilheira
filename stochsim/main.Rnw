@@ -3,6 +3,8 @@
 \title{Simulation of stochastic dynamic models}
 \author{Aaron A. King and Edward L. Ionides}
 
+\usetikzlibrary{arrows.meta,positioning,calc}
+
 \begin{document}
 
 <<knitr_opts,include=FALSE,cache=FALSE,purl=FALSE>>=
@@ -50,25 +52,34 @@ set.seed(2488820)
 
 \subsection{Example: the SIR model}
 
-\begin{frame}[allowframebreaks=0.8]{A basic compartment model: The SIR model}
+\begin{frame}[allowframebreaks]{A basic compartment model: The SIR model}
 
   \begin{itemize}
   \item
-    We develop deterministic and stochastic representations of a susceptible-infected-recovered (SIR) system, a fundamental class of models for disease transmission dynamics.
+    We develop deterministic and stochastic representations of a susceptible-infected-recovered (SIR) system, a simple example of a broad class of models for disease transmission dynamics.
+  \end{itemize}
+
+  \resizebox{!}{0.5\textheight}{
+    \input{../graphics/sir_diagram}
+  }
+
+  \begin{tabular}{c @{\ :\ } l c @{\ :\ } l}
+    $S$ & susceptible hosts & $I$ & infected and infectious hosts \\
+    $R$ & recovered and/or removed hosts & $C$ & reported cases
+  \end{tabular}
+
+  \framebreak
+
+  \begin{itemize}
   \item
     We set up  notation applicable to general compartment models \citep{Breto2009}.
-    \input{../graphics/sir_diagram}
-    \vspace{5mm}
-    \begin{tabular}{c @{\ :\ } l c @{\ :\ } l}
-      S & susceptible & I & infected and infectious  \\
-      R & recovered and/or removed  & C & reported cases
-    \end{tabular}
-  \item We suppose that each arrow has an associated rate, so here there is a rate $\mu_{SI}(t)$ at which individuals in $S$ transition to $I$, and $\mu_{IR}$ at which individuals in $I$ transition to $R$.
-  \item To account for demography (births/deaths/migration) we allow the possibility of a source and sink compartment, which is not usually represented on the flow diagram. We write $\mu_{BS}$ for a rate of births into $S$, and denote mortality rates by $\mu_{SD}$, $\mu_{ID}$, $\mu_{RD}$.
-  \item The rates may be either constant or varying. In particular, for a simple SIR model, the recovery rate $\mu_{IR}$ is a constant but the infection rate has the time-varying form
-    $$\mu_{SI}(t)=\beta \, I(t),$$
-    with $\beta$ being the \myemph{transmission rate}. For the simplest SIR model, ignoring demography, we set
-    $$ \mu_{BS}=\mu_{SD}=\mu_{ID}=\mu_{RD}=0.$$
+  \item We suppose that each arrow has an associated rate, so here there is a rate $\mu^{}_{SI}(t)$ at which individuals in $S$ transition to $I$, and $\mu^{}_{IR}$ at which individuals in $I$ transition to $R$.
+  \item To account for demography (births/deaths/migration) we allow the possibility of a source and sink compartment, which is not usually represented on the flow diagram. We write $\mu^{}_{BS}$ for a rate of births into $S$, and denote mortality rates by $\mu^{}_{SD}$, $\mu^{}_{ID}$, $\mu^{}_{RD}$.
+  \item The rates may be either constant or varying. In particular, for a simple SIR model, the recovery rate $\mu^{}_{IR}$ is a constant but the infection rate has the time-varying form
+    $$\mu^{}_{SI}(t)=\beta \, I(t),$$
+    with $\beta$ being the \myemph{transmission rate}.
+    For the simplest SIR model, we ignore demography, setting
+    $$ \mu^{}_{BS}=\mu^{}_{SD}=\mu^{}_{ID}=\mu^{}_{RD}=0.$$
   \end{itemize}
 \end{frame}
 
@@ -118,8 +129,8 @@ set.seed(2488820)
   These are:
   \begin{equation*}
     \begin{aligned}
-      \deriv{N_{SI}}{t} &= \mu_{SI}(t)\,S(t)\\
-      \deriv{N_{IR}}{t} &= \mu_{IR}\,I(t)
+      \frac{\dd{N_{SI}}}{\dd{t}} &= \mu^{}_{SI}(t)\,S(t)\\
+      \frac{\dd{N_{IR}}}{\dd{t}} &= \mu^{}_{IR}\,I(t)
     \end{aligned}
   \end{equation*}
 \end{frame}
@@ -136,13 +147,13 @@ set.seed(2488820)
 
     \begin{equation*}
       \begin{aligned}
-        \pr\big[N_{SI}(t+\delta)&\equals N_{SI}(t)+1\big] &\equals& \phantom{1-}\mu_{SI}(t)\,S(t)\,\delta + o(\delta)
+        \pr\big[N_{SI}(t+\delta)&\equals N_{SI}(t)+1\big] &\equals& \phantom{1-}\mu^{}_{SI}(t)\,S(t)\,\delta + o(\delta)
         \\
-        \pr\big[N_{SI}(t+\delta)&\equals N_{SI}(t)\big] &\equals& 1-\mu_{SI}(t)\,S(t)\,\delta + o(\delta)
+        \pr\big[N_{SI}(t+\delta)&\equals N_{SI}(t)\big] &\equals& 1-\mu^{}_{SI}(t)\,S(t)\,\delta + o(\delta)
         \\
-        \pr\big[N_{IR}(t+\delta)&\equals N_{IR}(t)+1\big] &\equals& \phantom{1-}\mu_{IR}\,I(t)\,\delta + o(\delta)
+        \pr\big[N_{IR}(t+\delta)&\equals N_{IR}(t)+1\big] &\equals& \phantom{1-}\mu^{}_{IR}\,I(t)\,\delta + o(\delta)
         \\
-        \pr\big[N_{IR}(t+\delta)&\equals N_{IR}(t)\big] &\equals& 1-\mu_{IR}(t)\,I(t)\,\delta + o(\delta)
+        \pr\big[N_{IR}(t+\delta)&\equals N_{IR}(t)\big] &\equals& 1-\mu^{}_{IR}(t)\,I(t)\,\delta + o(\delta)
       \end{aligned}
     \end{equation*}
 
@@ -248,9 +259,9 @@ set.seed(2488820)
   \item Recall the simple continuous-time Markov chain interpretation of the SIR model without demography:
     \begin{equation*}
       \begin{aligned}
-        \pr\big[N_{SI}(t+\delta)&\equals N_{SI}(t)+1\big] &\equals& \mu_{SI}(t) \, S(t) \delta + o(\delta),
+        \pr\big[N_{SI}(t+\delta)&\equals N_{SI}(t)+1\big] &\equals& \mu^{}_{SI}(t) \, S(t) \delta + o(\delta),
         \\
-        \pr\big[N_{IR}(t+\delta)&\equals N_{IR}(t)+1\big] &\equals& \mu_{IR} \, I(t) \delta + o(\delta).
+        \pr\big[N_{IR}(t+\delta)&\equals N_{IR}(t)+1\big] &\equals& \mu^{}_{IR} \, I(t) \delta + o(\delta).
       \end{aligned}
     \end{equation*}
   \item We want a numerical solution with state variables $\tilde S(k\delta)$, $\tilde I(k\delta)$, $\tilde R(k\delta)$.
@@ -274,23 +285,25 @@ set.seed(2488820)
 
   \begin{enumerate}[(1)]
   \item A Poisson approximation.
-    $$\tilde N_{SI}(t+\delta)= \tilde N_{SI}(t) + \mathrm{Poisson}\big[\mu_{SI}\big(\tilde I(t)\big) \, \tilde S(t) \,\delta\big],$$
+    $$\tilde N_{SI}(t+\delta)= \tilde N_{SI}(t) + \mathrm{Poisson}\big[\mu^{}_{SI}\big(\tilde I(t)\big) \, \tilde S(t) \,\delta\big],$$
     where $\mathrm{Poisson}(\mu)$ is a Poisson random variable with mean $\mu$ and
-    $$\mu_{SI}\big(\tilde I(t)\big) = \beta\, \tilde I(t).$$
+    $$\mu^{}_{SI}\big(\tilde I(t)\big) = \beta\, \tilde I(t).$$
 
   \item A binomial approximation,
-    $$\tilde N_{SI}(t+\delta) = \tilde N_{SI}(t) + \mathrm{Binomial}\big[\tilde S(t),\mu_{SI}\big(\tilde I(t)\big) \, \delta\big],$$
-    where $\mathrm{Binomial}(n,p)$ is a binomial random variable with mean $np$ and variance $np(1-p)$. Here, $p=\mu_{SI}\big(\tilde I(t)\big) \, \delta$.
+    $$\tilde N_{SI}(t+\delta) = \tilde N_{SI}(t) + \mathrm{Binomial}\big[\tilde S(t),\mu^{}_{SI}\big(\tilde I(t)\big) \, \delta\big],$$
+    where $\mathrm{Binomial}(n,p)$ is a binomial random variable with mean $np$ and variance $np(1-p)$. Here, $p=\mu^{}_{SI}\big(\tilde I(t)\big) \, \delta$.
 
   \item A binomial approximation with exponential transition probabilities.
-    $$ \tilde N_{SI}(t+\delta)= \tilde N_{SI}(t) + \mathrm{Binomial}\big[\tilde S(t),1-\exp\big\{-\mu_{SI}\big(\tilde I(t)\big) \delta\big\}\big].$$
+    $$ \tilde N_{SI}(t+\delta)= \tilde N_{SI}(t) + \mathrm{Binomial}\big[\tilde S(t),1-\exp\big\{-\mu^{}_{SI}\big(\tilde I(t)\big) \delta\big\}\big].$$
 
   \end{enumerate}
 
   \hrulefill
 
-  Analytically, it is usually easiest to reason using (1) or (2).\\
-  Practically, it is usually preferable to work with (3).
+  \begin{footnotesize}
+    Analytically, it is usually easiest to reason using (1) or (2).\\
+    Practically, it is usually preferable to work with (3).
+  \end{footnotesize}
 
 \end{frame}
 
@@ -299,7 +312,7 @@ set.seed(2488820)
   \item The Euler method extends naturally to stochastic differential equations (SDEs).
   \item A natural way to add stochastic variation to an ODE $dx/dt=h(x)$ is
     \begin{equation*}
-      \deriv{X}{t} = h(X)+\sigma\,\deriv{B}{t}
+      \frac{\dd{X}}{\dd{t}} = h(X)+\sigma\,\frac{\dd{B}}{\dd{t}}
     \end{equation*}
     where $\{B(t)\}$ is Brownian motion and so $dB/dt$ is Brownian noise.
   \item An Euler approximation $\tilde X(t)$ is
@@ -346,18 +359,18 @@ set.seed(2488820)
   \framebreak
 
   We download the data and examine them:
-
   <<meas-data1>>=
   library(tidyverse)
-  read_csv(paste0("https://kingaa.github.io/serrapilheira/stochsim/",
-    "Measles_Consett_1948.csv")) |>
+  read_csv(
+    paste0("https://kingaa.github.io/serrapilheira/stochsim/",
+      "Measles_Consett_1948.csv")) |>
     select(week,reports=cases) -> meas
   meas |> as.data.frame() |> head()
   @
 
   \framebreak
 
-  <<meas-data2,echo=FALSE>>=
+  <<meas-data2,echo=FALSE,out.width="70%">>=
   library(tidyverse)
   meas |>
     ggplot(aes(x=week,y=reports))+
@@ -373,7 +386,7 @@ set.seed(2488820)
   \item These are incidence data: The \code{reports} variable counts the number of reports of new measles cases each week.
   \item Let us model the outbreak using the simple SIR model.
   \item Our tasks will be, first, to estimate the parameters of the SIR and, second, to decide whether or not the SIR model is an adequate description of these data.
-  \item The rate at which individuals move from S to I is the \myemph{force of infection}, $\mu_{SI}=\beta\,I/N$, while that at which individuals move into the R class is $\mu_{IR}$.
+  \item The rate at which individuals move from S to I is the \myemph{force of infection}, $\mu^{}_{SI}=\beta\,I/N$, while that at which individuals move into the R class is $\mu^{}_{IR}$.
   \end{itemize}
 \end{frame}
 
@@ -404,7 +417,7 @@ set.seed(2488820)
   \item  We follow method 3 above, modeling the number, $\Delta{N_{SI}}$, moving from S to I over interval $\Delta{t}$ as
     $$\Delta{N_{SI}} \sim \dist{Binomial}{S,1-e^{-\beta\,\frac{I}{N}\,\Delta{t}}},$$
     and the number moving from I to R as
-    $$\Delta{N_{IR}} \sim \dist{Binomial}{I,1-e^{-\mu_{IR}\,\Delta{t}}}.$$
+    $$\Delta{N_{IR}} \sim \dist{Binomial}{I,1-e^{-\mu^{}_{IR}\,\Delta{t}}}.$$
 
     \framebreak
 
@@ -598,7 +611,7 @@ set.seed(2488820)
     Assuming 50\% reporting, we have that $S_0\approx\Sexpr{sum(meas$reports)/0.5}$, so that
     $\eta=\frac{S_0}{N}\approx\Sexpr{mysignif(2*sum(meas$reports)/38000,2)}$.
 
-  \item If the infectious period is roughly 2 weeks, then $1/\mu_{IR} \approx 2~\text{wk}$ and $\beta = \mu_{IR}\,\Rzero \approx 7.5~\text{wk}^{-1}$.
+  \item If the infectious period is roughly 2 weeks, then $1/\mu^{}_{IR} \approx 2~\text{wk}$ and $\beta = \mu^{}_{IR}\,\Rzero \approx 7.5~\text{wk}^{-1}$.
 
   \item Let's simulate the model at these parameters.
 
@@ -643,7 +656,9 @@ set.seed(2488820)
   Below is a diagram of the so-called SEIR model.
   This differs from the SIR model in that infected individuals must pass a period of latency before becoming infectious.
 
-  <<seir-diagram,child="../graphics/seir_diagram.Rnw",echo=FALSE,purl=FALSE,fig.height=3/4,fig.width=15/2>>=
+  \input{../graphics/seir_diagram}
+
+  <<seir-diagram,child="../graphics/seir_diagram.Rnw",echo=FALSE,purl=FALSE,fig.height=3/4,fig.width=15/2,eval=FALSE>>=
   @
 
   Modify the codes above to construct a \code{pomp} object containing the Consett measles data and an SEIR model.

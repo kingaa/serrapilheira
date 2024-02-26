@@ -3,8 +3,9 @@ plan(multisession)
 set.seed(2488820)
 
 library(tidyverse)
-read_csv(paste0("https://kingaa.github.io/serrapilheira/stochsim/",
-  "Measles_Consett_1948.csv")) |>
+read_csv(
+  paste0("https://kingaa.github.io/serrapilheira/stochsim/",
+    "Measles_Consett_1948.csv")) |>
   select(week,reports=cases) -> meas
 meas |> as.data.frame() |> head()
 

@@ -48,13 +48,15 @@ set.seed(1350254336)
 \begin{frame}[allowframebreaks]{Overview}
 
   The following schematic diagram represents conceptual links between different components of the methodological approach we're developing for statistical inference on epidemiological dynamics.
-  <<flow-diagram,child="../graphics/flow_diagram.Rnw",dpi=200,fig.width=4.5,fig.align="center",echo=FALSE,results="hide",purl=FALSE,out.width="0.5\\textwidth">>=
+  
+  <<flow-diagram,child="../graphics/flow_diagram.Rnw",fig.dim=c(4.5,4),fig.align="center",echo=FALSE,results="hide",purl=FALSE,out.width="45%">>=
   @
 
+  In this lesson, we're going to discuss the orange compartments.
+  
   \framebreak
 
   \begin{itemize}
-  \item In this lesson, we're going to discuss the orange compartments.
   \item The Monte Carlo technique called the ``particle filter'' is central for connecting the higher-level ideas of POMP models and likelihood-based inference to the lower-level tasks involved in carrying out data analysis.
   \item We employ a standard toolkit for likelihood based inference:
     Maximum likelihood estimation, profile likelihood confidence intervals, likelihood ratio tests for model selection, and other likelihood-based model comparison tools such as AIC.

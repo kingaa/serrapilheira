@@ -20,6 +20,7 @@
 \newcommand\Rzero{\mathfrak{R}_0}
 \newcommand\argmax{\mathop{\mathrm{argmax}}}
 \newcommand\argmin{\mathop{\mathrm{argmin}}}
+\def\dd{\mathrm{d}}
 
 \newcommand\code[1]{\texttt{#1}}
 \newcommand\pkg[1]{\textbf{#1}}
@@ -28,19 +29,6 @@
 \newcommand{\doi}[1]{\link{https://doi.org/#1}{\texttt{doi:~{#1}}}}
 
 \newcommand{\scinot}[2]{#1{\times}10^{#2}}
-\newcommand{\dd}[1]{\mathrm{d}{#1}}
-\newcommand{\pd}[3][]{%
-  \def\ord{#1} \ifx\ord\empty%
-  \frac{\partial{#2}}{\partial{#3}}%
-  \else \frac{\partial^{#1}{#2}}{\partial{#3}^{#1}}%
-  \fi
-}
-\newcommand{\deriv}[3][]{%
-  \def\ord{#1} \ifx\ord\empty%
-  \frac{\dd{#2}}{\dd{#3}}%
-  \else \frac{\dd^{#1}{#2}}{\dd{#3}^{#1}}%
-  \fi
-}
 
 \newcommand\Rlanguage{\textsf{R}\xspace}
 
