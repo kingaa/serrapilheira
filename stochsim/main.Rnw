@@ -59,8 +59,15 @@ set.seed(2488820)
     We develop deterministic and stochastic representations of a susceptible-infected-recovered (SIR) system, a simple example of a broad class of models for disease transmission dynamics.
   \end{itemize}
 
-  \resizebox{!}{0.5\textheight}{
-    \input{../graphics/sir_diagram}
+  \mode<beamer>{
+    \resizebox{!}{0.5\textheight}{
+      \input{../graphics/sir_diagram}
+    }
+  }
+  \mode<article>{
+    \resizebox{0.8\textwidth}{!}{
+      \input{../graphics/sir_diagram}
+    }
   }
 
   \begin{tabular}{c @{\ :\ } l c @{\ :\ } l}
@@ -657,9 +664,6 @@ set.seed(2488820)
   This differs from the SIR model in that infected individuals must pass a period of latency before becoming infectious.
 
   \input{../graphics/seir_diagram}
-
-  <<seir-diagram,child="../graphics/seir_diagram.Rnw",echo=FALSE,purl=FALSE,fig.height=3/4,fig.width=15/2,eval=FALSE>>=
-  @
 
   Modify the codes above to construct a \code{pomp} object containing the Consett measles data and an SEIR model.
   Perform simulations as above and adjust parameters to get a sense of whether improvement is possible by including a latent period.
