@@ -1,4 +1,4 @@
-MODULES = prep misc intro stochsim pfilter mif measles ebola parest rio
+MODULES = prep misc intro stochsim pfilter mif measles ebola parest
 
 default: index.html acknowledge.html modules README.md 
 

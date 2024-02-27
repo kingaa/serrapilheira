@@ -1,6 +1,6 @@
 ---
 title: |
-  Introduction: Partially observed Markov processes and simulation-based inference.
+  Introduction: Models as Scientific Instruments
 output:
   html_document:
     includes:
@@ -11,8 +11,8 @@ output:
 
 ----------------------
 
-| &nbsp;          | &nbsp;              |
-|:----------------|:-------------------:|
-| Lecture notes   | [PDF](notes.pdf)    |
-| Lecture slides  | [PDF](slides.pdf)   |
-| Another example | [HTML](ricker.html) |
+| &nbsp;         | &nbsp;                |
+|:---------------|:---------------------:|
+| Lecture slides | [HTML](pomptalk.html) |
+
+	

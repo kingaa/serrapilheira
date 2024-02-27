@@ -54,6 +54,11 @@ and the time required for their computation on a linux cluster with
 <td style="text-align: right;">18.9</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">phylo/results</td>
+<td style="text-align: right;">336</td>
+<td style="text-align: right;">5.1</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">ebola/results</td>
 <td style="text-align: right;">2259</td>
 <td style="text-align: right;">0.4</td>
@@ -64,7 +69,7 @@ and the time required for their computation on a linux cluster with
 The archives amount to about 5 MB.
 
 Full compilation, i.e., rebuilding the complete set of materials
-following deletion of all archives, requires about 321 min on a
+following deletion of all archives, requires about 326 min on a
 250-processor cluster. Full compilation regenerates the complete set of
 archives. A finishing compilation, i.e., rebuilding with all archives in
 place, but with the re-Making of all documents, requires about 12 min on
