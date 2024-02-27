@@ -60,9 +60,11 @@ Students new to **R** should complete a [tutorial](https://kingaa.github.io/R_Tu
 
 [**4. Iterated filtering: theory and practice.**](./mif/index.html)
 
-[**5. Case study: measles.  Recurrent epidemics, long time series, covariates, extra-demographic stochasticity, interpretation of parameter estimates.**](./measles/index.html)
+[**5. Phylodynamics and genealogy processes.**](./phylo/index.html)
 
-[**6. Case study: Ebola. Model diagnostics and forecasting.**](./ebola/index.html)
+[**6. Case study: measles.  Recurrent epidemics, long time series, covariates, extra-demographic stochasticity, interpretation of parameter estimates.**](./measles/index.html)
+
+[**7. Case study: Ebola. Model diagnostics and forecasting.**](./ebola/index.html)
 
 [**Appendix: A gentle introduction to inference.**](./parest/index.html)
 
