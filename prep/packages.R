@@ -47,6 +47,7 @@ colorspace
 cowplot
 deSolve
 foreach
+gifski
 iterators
 doFuture
 doRNG

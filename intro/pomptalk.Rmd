@@ -14,7 +14,7 @@ csl: ../jss.csl
 params:
   prefix: pomptalk
 nocite: |
-  @Lavine2011, @DomenechdeCelles2016, @DomenechdeCelles2018
+  @Lavine2011, @DomenechdeCelles2016, @DomenechdeCelles2018, @King2016
 ---
 
 ```{r knitr-opts,include=FALSE,purl=FALSE,cache=FALSE}
@@ -538,6 +538,35 @@ The key principle is that we must model the error.
 \input{../graphics/state_space_diagram2}
 ```
 
+## Central problem
+
+The full joint density is:
+
+$$f_{X,Y}(x,y;\theta) = f_0(x_0;\theta)\,\prod_{n=1}^N\!f_{n}(x_n|x_{n-1};\theta)\,g_{n}(y_n|x_n;\theta).$$
+
+The likelihood function is the marginal density for $Y$, evaluated at the data:
+
+$$
+\begin{split}
+\mathcal{L}(\theta)&=f_{Y}(y^*_1,\dots,y^*_n;\theta)\\
+&=\int f_{X,Y}(x_0,\dots,x_N,y^*_1,\dots,y^*N;\theta)\, dx_1\cdots dx_n.
+\end{split}
+$$
+
+
+## Perils of mechanistic models
+
+- computing the likelihood requires integrating over $X_t$  
+for all $t$
+- traditional solution---be very clever:
+    - simplify the model to make it statistically tractable
+    - devise and tune an inference algorithm (e.g., MCMC sampler) specifically to the model
+- but: are we testing just our hypothesis or the statistical method also?
+- it is perilous to invest too much time in one model
+    - the Pygmalion problem
+    - an antidote: the method of multiple working hypotheses
+
+
 ## The &ldquo;plug-and-play&rdquo; property
 
 Definition: an algorithm has the *plug-and-play property* if it has no need to compute the latent process transition density.
@@ -563,8 +592,38 @@ They are also called "simulation-based" methods.
     - Particle Markov chain Monte Carlo
     - Iterated filtering
 
-Variants of all of these are available in the **pomp** software package (King et al. 2016; [https://kingaa.github.io/pomp/]) and elswhere.
+Variants of all of these are available in the **pomp** software package (King&nbsp;et&nbsp;al.&nbsp;2016; [https://kingaa.github.io/pomp/]) and elsewhere.
 
+
+## Common model comparison criteria
+
+- The best model agrees with already published results
+- The best model is the one that I can estimate before my thesis is due
+- The best model is the one that best agrees with my preconceptions
+- The best model is the one that makes my supervisor the happiest
+- An identifiable model is better than a non-identifiable model
+- The best model is the one with the narrowest confidence intervals
+
+## Valid model comparison criteria
+
+- How well does the model fit the data?
+    - How does the likelihood compare to benchmark values?
+    - Does the model fit well? (fitting best $\ne$ fitting well
+)
+- How does the model explain the data?
+    - What aspects of the data are explained?
+    - What aspects are ascribed to noise?
+- Model adequacy
+    - Are the data consistent with the model's assumptions?
+    - If the model were correct, how plausible are the data?
+
+## Valid model comparison criteria
+
+- Predictive power
+    - Can the model make accurate out-of-sample predictions?
+- What predictions to parameter estimates make about the results of independent studies?
+- Fertility
+    - Does the model make testable predictions?
 
 ## Pertussis and vaccine failure
 

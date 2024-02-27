@@ -11,9 +11,11 @@ output:
 
 ----------------------
 
-| &nbsp;                            | &nbsp;                 |
-|:----------------------------------|:----------------------:|
-| Lecture notes                     | [PDF](notes.pdf)       |
-| Lecture slides                    | [PDF](slides.pdf)      |
-| **R** script for the lesson       | [**R**](main.R)        |
+| &nbsp;                         | &nbsp;                 |
+|:-------------------------------|:----------------------:|
+| Lecture notes                  | [PDF](notes.pdf)       |
+| Lecture slides                 | [PDF](slides.pdf)      |
+| Exercises                      | [HTML](exercises.html) |
+| **R** script for the exercises | [**R**](exercises.R)   |
+| animation script               | [**R**](animator.R)    |
 

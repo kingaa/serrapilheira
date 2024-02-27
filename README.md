@@ -4,7 +4,7 @@ Inference for Disease Dynamics<br>Course Materials
 ### Required software
 
 The codes require, at a minimum, [**R**](https://cran.r-project.org/)
-version 4.2 and [**pomp**](https://kingaa.github.io/pomp/) version 5.2.
+version 4.3 and [**pomp**](https://kingaa.github.io/pomp/) version 5.6.
 Windows users must also have the appropriate version of
 [**Rtools**](https://cran.r-project.org/bin/windows/Rtools/) installed.
 The `prep` directory contains scripts that will install other needed

@@ -1,0 +1,166 @@
+---
+title: Phylodynamics exercises
+author: Aaron A. King
+output:
+  html_document:
+    toc: yes
+    toc_depth: 4
+    toc_float:
+      collapsed: TRUE
+      smooth_scroll: TRUE
+    highlight: haddock
+    code_folding: show
+    number_sections: FALSE
+    df_print: paged
+    includes:
+      after_body:
+      - ../_includes/supp_bottom.html
+      - ../_includes/license.html
+bibliography: ../course.bib
+csl: ../jss.csl
+---
+
+--------------------
+
+```{r knitr-opts,purl=FALSE,include=FALSE}
+params <- list(prefix="ex")
+source("../_includes/setup.R", local = knitr::knit_global())
+opts_knit$set(animation.fun = hook_scianimator)
+```
+
+### Preliminaries
+
+The **R** codes shown in this document are [available for download](./exercises.R).
+Save a copy of these codes for use as a template in your own work on the exercises.
+
+```{r parallel-setup,include=FALSE,cache=FALSE}
+if (file.exists("CLUSTER.R")) {
+  source("CLUSTER.R")
+} else {
+  library(doFuture)
+  plan(multisession)
+}
+```
+
+We begin by loading the packages we'll need and setting the random seed, to allow reproducibility.
+
+```{r prelims,cache=FALSE}
+set.seed(517218506L)
+library(tidyverse)
+library(phylopomp)
+library(gifski)
+theme_set(theme_bw())
+```
+
+## The Moran process
+
+```{css help_page_style,echo=FALSE,purl=FALSE}
+.help {
+	text-align: left;
+	border-width: 2px;
+	width: 90%;
+	height: 50ex;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-top: 10px;
+	padding-bottom: 20px;
+}
+```
+
+```{r cache=FALSE,include=FALSE,purl=FALSE}
+embed_help <- function (page, package) {
+  require(tools,quietly=TRUE)
+  require(base64enc,quietly=TRUE)
+  page <- as.character(page)
+  package <- as.character(package)
+  cmd <- bquote(help(.(page),package=.(package)))
+  pgpth <- tempfile()
+  tools::Rd2HTML(
+           eval(bquote(utils:::.getHelpFile(.(cmd)))),
+           stylesheet="https://cran.r-project.org/R.css",
+           out=pgpth
+         )
+  base64enc::base64encode(pgpth) -> dat
+  unlink(pgpth)
+  sprintf(r"{<iframe id="%s" class="help" src="data:text/html;base64,%s"></iframe>}",parse(text=page),dat)
+}
+```
+
+`r embed_help("moran","phylopomp")`
+
+```{r moran0,fig.show="hold",fig.dim=c(5,3),out.width="50%"}
+simulate("Moran",time=0,n=10,psi=0) -> m
+m |> plot(prune=FALSE,points=TRUE)+expand_limits(x=5)
+m |> simulate("Moran",time=1) -> m
+m |> plot(prune=FALSE,points=TRUE)+expand_limits(x=5)
+m |> simulate("Moran",time=2) -> m
+m |> plot(prune=FALSE,points=TRUE)+expand_limits(x=5)
+m |> simulate("Moran",time=3) -> m
+m |> plot(prune=FALSE,points=TRUE)+expand_limits(x=5)
+m |> simulate("Moran",time=4) -> m
+m |> plot(prune=FALSE,points=TRUE)+expand_limits(x=5)
+m |> simulate("Moran",time=5) -> m
+m |> plot(prune=FALSE,points=TRUE)+expand_limits(x=5)
+```
+
+```{r moran1,results="hide"}
+simulate("Moran",t0=0,time=0,n=10,psi=0) -> m
+times <- seq(0,10,by=0.1)
+pl <- vector(mode="list",length=length(times))
+for (i in seq_along(times)) {
+  m |> simulate("Moran",time=times[i]) -> m
+  m |>
+    plot(prune=FALSE,points=TRUE)+
+    expand_limits(x=10) -> pl[[i]]
+}
+```
+
+```{r moran1a,results="hide"}
+source("https://kingaa.github.io/serrapilheira/phylo/animator.R")
+
+animator(plots=pl,gif_file="moran1.gif",webm=TRUE,framerate=15)
+
+if (rstudioapi::isAvailable()) {
+  file.show("moran1.gif")
+}
+```
+
+<video style="width: 500px;" controls>
+	<source src="data:video/webm;base64,`r base64enc::base64encode("moran1.webm")`" type="video/webm"/>
+	Your browser does not support the video element.
+</video>
+
+
+## Linear birth-death process
+
+`r embed_help("lbdp","phylopomp")`
+
+
+## SIR process
+
+`r embed_help("sir","phylopomp")`
+
+## SIRS process
+
+Set $\omega>0$.
+
+## SEIRS process
+
+`r embed_help("seir","phylopomp")`
+
+## Competition between two strains
+
+`r embed_help("siir","phylopomp")`
+
+
+## A model of superspreading
+
+`r embed_help("si2r","phylopomp")`
+
+----------------------
+
+Produced in **R** version `r getRversion()` using **phylopomp** version `r packageVersion("phylopomp")`.
+
+----------------------
+
+## References
