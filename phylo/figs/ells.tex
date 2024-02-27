@@ -1,0 +1,234 @@
+\begin{center}
+  \resizebox{0.5\linewidth}{!}{
+    \begin{tikzpicture}[scale=2]
+      \usetikzlibrary{shapes,arrows,positioning}
+      \usetikzlibrary{arrows.meta,positioning,decorations}
+      \tikzstyle{label}=[font=\Large]
+      \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+      \tikzstyle{deme1}=[color=darkblue, line width=3pt]
+      \tikzstyle{deme1H}=[color=darkblue, line width=3pt, densely dotted]
+      \tikzstyle{deme2}=[color=maize, line width=3pt]
+      \tikzstyle{deme2H}=[color=maize, line width=3pt, densely dotted]
+      \tikzstyle{axis}=[color=black, thick, >=stealth]
+      \tikzstyle{timepoint}=[color=red!70!black]
+
+      \def\ysp{0.2} %% spacing between adjacent lineages
+
+      %% Birth-type event, unpruned
+      \begin{scope}[shift={(0,0)}]
+        \coordinate (origin) at (0,0);
+        \node[label] (lab) at (origin) {\textbf{A}};
+        \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+        \coordinate (right) at ($(left)+(1,0)$);
+        \coordinate (mid) at ($(left)!0.5!(right)$);
+        \coordinate (rlab) at ($(right)+(0.1,0)$);
+        \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+        \coordinate (bright) at (rlab |- bleft);
+        \coordinate (temp) at ($(origin)+(0,-3*\ysp)$);
+        \coordinate (temp1) at ($(temp)+(0,-\ysp)$);
+        \draw[deme2] (mid |- temp) -- (mid |- temp1) -- (right |- temp1);
+        \draw[deme1] (left |- temp) -- (right |- temp);
+        \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+        \foreach \y in {1,2,7} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {5,6,8} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme2] (left |- temp) -- (right |- temp);
+        }
+        \draw[timepoint] (mid) -- (mid |- bleft);
+        \draw[axis,->] (bleft) -- (bright);
+        \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+      \end{scope}
+
+      %% Birth-type event, pruned
+      \begin{scope}[shift={(0,-2)}]
+        \coordinate (origin) at (0,0);
+        \node[label] (lab) at (origin) {\textbf{B}};
+        \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+        \coordinate (right) at ($(left)+(1,0)$);
+        \coordinate (mid) at ($(left)!0.5!(right)$);
+        \coordinate (rlab) at ($(right)+(0.1,0)$);
+        \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+        \coordinate (bright) at (rlab |- bleft);
+        \coordinate (temp) at ($(origin)+(0,-3*\ysp)$);
+        \coordinate (temp1) at ($(temp)+(0,-\ysp)$);
+        \draw[deme1] (left |- temp) -- (mid |- temp);
+        \draw[deme1H] (mid |- temp) -- (right |- temp);
+        \draw[deme2] (mid |- temp) -- (mid |- temp1) -- (right |- temp1);
+        \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+        \foreach \y in {7} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1H] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {1,2} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {5,6} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme2H] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {8} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme2] (left |- temp) -- (right |- temp);
+        }
+        \draw[timepoint] (mid) -- (mid |- bleft);
+        \draw[axis,->] (bleft) -- (bright);
+        \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+      \end{scope}
+
+      %% Migration-type event, unpruned
+      \begin{scope}[shift={(2,0)}]
+        \coordinate (origin) at (0,0);
+        \node[label] (lab) at (origin) {\textbf{C}};
+        \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+        \coordinate (right) at ($(left)+(1,0)$);
+        \coordinate (mid) at ($(left)!0.5!(right)$);
+        \coordinate (rlab) at ($(right)+(0.1,0)$);
+        \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+        \coordinate (bright) at (rlab |- bleft);
+        \foreach \y in {2,3,8} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1] (left |- temp) -- (right |- temp);
+        }
+        \coordinate (temp) at ($(origin)+(0,-4*\ysp)$);
+        \draw[deme1] (left |- temp) -- (mid |- temp);
+        \draw[deme2] (mid |- temp) -- (right |- temp);
+        \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+        \foreach \y in {1,5} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme2] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {6,7} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1] (left |- temp) -- (right |- temp);
+        }
+        \draw[timepoint] (mid) -- (mid |- bleft);
+        \draw[axis,->] (bleft) -- (bright);
+        \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+      \end{scope}
+
+      %% Migration-type event, pruned
+      \begin{scope}[shift={(2,-2)}]
+        \coordinate (origin) at (0,0);
+        \node[label] (lab) at (origin) {\textbf{D}};
+        \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+        \coordinate (right) at ($(left)+(1,0)$);
+        \coordinate (mid) at ($(left)!0.5!(right)$);
+        \coordinate (rlab) at ($(right)+(0.1,0)$);
+        \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+        \coordinate (bright) at (rlab |- bleft);
+        \coordinate (temp) at ($(origin)+(0,-4*\ysp)$);
+        \draw[deme1] (left |- temp) -- (mid |- temp);
+        \draw[deme2] (mid |- temp) -- (right |- temp);
+        \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+        \foreach \y in {2,3,8} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1H] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {6,7} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {1} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme2H] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {5} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme2] (left |- temp) -- (right |- temp);
+        }
+        \draw[timepoint] (mid) -- (mid |- bleft);
+        \draw[axis,->] (bleft) -- (bright);
+        \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+      \end{scope}
+
+      %% Sample event, unpruned
+      \begin{scope}[shift={(4,0)}]
+        \coordinate (origin) at (0,0);
+        \node[label] (lab) at (origin) {\textbf{E}};
+        \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+        \coordinate (right) at ($(left)+(1,0)$);
+        \coordinate (mid) at ($(left)!0.5!(right)$);
+        \coordinate (rlab) at ($(right)+(0.1,0)$);
+        \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+        \coordinate (bright) at (rlab |- bleft);
+        \foreach \y in {2,5} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {1,4,7} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme2] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {3,6,8} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1] (left |- temp) -- (right |- temp);
+        }
+        \coordinate (temp) at ($(origin)+(0,-2*\ysp)$);
+        \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+        \coordinate (temp) at ($(origin)+(0,-6*\ysp)$);
+        \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+        \draw[timepoint] (mid) -- (mid |- bleft);
+        \draw[axis,->] (bleft) -- (bright);
+        \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+      \end{scope}
+
+      %% Sample event, pruned
+      \begin{scope}[shift={(4,-2)}]
+        \coordinate (origin) at (0,0);
+        \node[label] (lab) at (origin) {\textbf{F}};
+        \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+        \coordinate (right) at ($(left)+(1,0)$);
+        \coordinate (mid) at ($(left)!0.5!(right)$);
+        \coordinate (rlab) at ($(right)+(0.1,0)$);
+        \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+        \coordinate (bright) at (rlab |- bleft);
+        \coordinate (temp) at ($(origin)+(0,-2*\ysp)$);
+        \draw[deme1] (left |- temp) -- (mid |- temp);
+        \draw[deme1H] (mid |- temp) -- (right |- temp);
+        \foreach \y in {3,8} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1H] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {5,6} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme1] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {1,4} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme2] (left |- temp) -- (right |- temp);
+        }
+        \foreach \y in {7} {
+          \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+          \draw[deme2H] (left |- temp) -- (right |- temp);
+        }
+        \coordinate (temp) at ($(origin)+(0,-2*\ysp)$);
+        \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+        \coordinate (temp) at ($(origin)+(0,-6*\ysp)$);
+        \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+        \draw[timepoint] (mid) -- (mid |- bleft);
+        \draw[axis,->] (bleft) -- (bright);
+        \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+      \end{scope}
+    \end{tikzpicture}
+  }
+\end{center}
+\caption{
+  \textbf{Lineage count and saturation.}
+  Each panel shows the neighborhood of a single event in the unpruned genealogy (top row) and the corresponding pruned genealogy (bottom row).
+  Pruning consists of the removal of all branches that are not ancestral to some sample.
+  In the bottom row of panels, pruned branches are indicated using broken lines.
+  \textbf{(A)} A birth-type event with production $r=(r_{\lab{blue}},r_{\lab{yellow}})=(1,1)$ occurs.
+  \textbf{(B)} Pruning results in the removal of the dashed lineages.
+  The lineage count at this event-time is $\ell=(\ell_{\lab{blue}},\ell_{\lab{yellow}})=(2,2)$.
+  The saturation is $s=(0,1)$ since only a single, yellow lineage emerges from the event.
+  \textbf{(C)} A migration-type event with production $r=(0,1)$ occurs.
+  \textbf{(D)} After pruning, $\ell=(2,2)$ and $s=(0,1)$.
+  \textbf{(E)} A sample-type event occurs in which two blue lineages are sampled (production $r=(2,0)$).
+  \textbf{(F)} After pruning, $\ell=(2,2)$ and $s=(1,0)$.
+  Observe that in panels B and D, the local structures of the pruned genealogies are identical, though they arise from events of different type.
+  \label{fig:ells}
+}

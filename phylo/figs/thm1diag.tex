@@ -1,0 +1,165 @@
+\documentclass[crop,tikz]{standalone}
+\begin{document}
+\usetikzlibrary{arrows.meta,positioning,decorations,calc,math}
+\definecolor{maize}{rgb}{1.0,0.796,0.020}
+\definecolor{darkblue}{rgb}{0,0.153,0.298}
+\definecolor{darkgreen}{rgb}{0,0.392,0}
+\definecolor{royalblue2}{rgb}{0.263,0.431,0.933}
+\begin{tikzpicture}[scale=1.5]
+  \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+  \tikzstyle{label}=[color=black]
+  \tikzstyle{deme1}=[color=maize, line width=2pt]
+  \tikzstyle{deme2}=[color=darkblue, line width=2pt]
+  \tikzstyle{axis}=[color=black, thick, >=latex]
+  \tikzstyle{timepoint}=[color=red!70!black]
+  \tikzmath{
+    coordinate \orig, \lab, \loc;
+    int \n, \i;
+    \n = 7;
+    \ysp = 0.3;
+    \ew = \ysp/5;
+    \w = 1.5;
+    % PANEL A
+    \orig = (0,0);
+    \lab = (\orig) + \ysp*(0,-0.5);
+    \i = \n+1;
+    \loc1 = (\orig) + (0,-\i*\ysp);
+    \loc2 = (\loc1) + (1.1*\w,0);
+    print {
+      \node (figlab) at (\lab) {\textbf{A}};
+      \node (tlab) at (\loc2) {$t$};
+      \draw[axis,->] (\loc1) -- (tlab.west);
+    };
+    for \i in {1,...,7} {
+      \loc1 = (\orig) + (0,-\i*\ysp);
+      \loc2 = (\orig) + (0.5*\w,-\i*\ysp);
+      \loc3 = (\orig) + (\w,-\i*\ysp);
+      print {
+        \node (st\i) at (\loc1) {};
+        \coordinate (mid\i) at (\loc2) {};
+        \node[label] (lab\i) at (\loc3) {$\i$};
+      };
+    };
+    for \i in {1,3,7} {
+      print {
+        \draw[deme1] (st\i) -- (lab\i.west);
+      };
+    };
+    for \i in {2,6} {
+      print {
+        \draw[deme2] (st\i) -- (lab\i.west);
+      };
+    };
+    print {
+      \draw[deme1] (st4) -- (mid4) -- (mid5) -- (lab5.west);
+      \draw[deme2] (mid4) -- (lab4.west);
+      \fill[fill=darkgreen] (mid4) circle (\ew);
+    };
+    % PANEL B
+    \orig = (\orig) + (1.2*\w,0);
+    \lab = (\orig) + \ysp*(0,-0.5);
+    \i = \n+1;
+    \loc1 = (\orig) + (0,-\i*\ysp);
+    \loc2 = (\loc1) + (1.1*\w,0);
+    print {
+      \node (figlab) at (\lab) {\textbf{B}};
+      \node (tlab) at (\loc2) {$t$};
+      \draw[axis,->] (\loc1) -- (tlab.west);
+    };
+    for \i in {1,...,7} {
+      \loc1 = (\orig) + (0,-\i*\ysp);
+      \loc2 = (\orig) + (0.5*\w,-\i*\ysp);
+      \loc3 = (\orig) + (\w,-\i*\ysp);
+      print {
+        \node (st\i) at (\loc1) {};
+        \coordinate (mid\i) at (\loc2) {};
+        \node[label] (lab\i) at (\loc3) {$\i$};
+      };
+    };
+    for \i in {1,6,7} {
+      print {
+        \draw[deme1] (st\i) -- (lab\i.west);
+      };
+    };
+    for \i in {2,4,5} {
+      print {
+        \draw[deme2] (st\i) -- (lab\i.west);
+      };
+    };
+    print {
+      \draw[deme2] (st3) -- (mid3);
+      \draw[deme1] (mid3) -- (lab3.west);
+      \fill[fill=darkgreen] (mid3) circle (\ew);
+    };
+    % PANEL C
+    \orig = (\orig) + (1.2*\w,0);
+    \lab = (\orig) + \ysp*(0,-0.5);
+    \i = \n+1;
+    \loc1 = (\orig) + (0,-\i*\ysp);
+    \loc2 = (\loc1) + (1.1*\w,0);
+    print {
+      \node (figlab) at (\lab) {\textbf{C}};
+      \node (tlab) at (\loc2) {$t$};
+      \draw[axis,->] (\loc1) -- (tlab.west);
+    };
+    for \i in {1,...,7} {
+      \loc1 = (\orig) + (0,-\i*\ysp);
+      \loc2 = (\orig) + (0.5*\w,-\i*\ysp);
+      \loc3 = (\orig) + (\w,-\i*\ysp);
+      print {
+        \node (st\i) at (\loc1) {};
+        \coordinate (mid\i) at (\loc2) {};
+        \node[label] (lab\i) at (\loc3) {$\i$};
+      };
+    };
+    for \i in {1,3,6,7} {
+      print {
+        \draw[deme1] (st\i) -- (lab\i.west);
+      };
+    };
+    for \i in {2,4,5} {
+      print {
+        \draw[deme2] (st\i) -- (lab\i.west);
+      };
+    };
+    print {
+      \fill[fill=darkgreen] (mid6) circle (\ew);
+    };
+    % PANEL D
+    \orig = (\orig) + (1.2*\w,0);
+    \lab = (\orig) + \ysp*(0,-0.5);
+    \i = \n+1;
+    \loc1 = (\orig) + (0,-\i*\ysp);
+    \loc2 = (\loc1) + (1.1*\w,0);
+    print {
+      \node (figlab) at (\lab) {\textbf{D}};
+      \node (tlab) at (\loc2) {$t$};
+      \draw[axis,->] (\loc1) -- (tlab.west);
+    };
+    for \i in {1,...,7} {
+      \loc1 = (\orig) + (0,-\i*\ysp);
+      \loc2 = (\orig) + (0.5*\w,-\i*\ysp);
+      \loc3 = (\orig) + (\w,-\i*\ysp);
+      print {
+        \node (st\i) at (\loc1) {};
+        \coordinate (mid\i) at (\loc2) {};
+        \node[label] (lab\i) at (\loc3) {$\i$};
+      };
+    };
+    for \i in {1,3,6,7} {
+      print {
+        \draw[deme1] (st\i) -- (lab\i.west);
+      };
+    };
+    for \i in {2,4,5} {
+      print {
+        \draw[deme2] (st\i) -- (lab\i.west);
+      };
+    };
+    print {
+      \fill[fill=royalblue2] (mid3) circle (\ew);
+      \fill[fill=royalblue2] (mid6) circle (\ew);
+    };
+  }
+\end{tikzpicture}
+\end{document}

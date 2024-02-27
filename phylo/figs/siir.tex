@@ -1,0 +1,34 @@
+\begin{tikzpicture}[scale=1]
+  \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+  \tikzstyle{ibox}=[draw=darkgreen]
+  \tikzstyle{deme}=[fill=black!20!white]
+  \tikzstyle{label}=[font=\Large]
+  \tikzstyle{rate}=[sloped, font=\scriptsize]
+  \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+  \tikzstyle{flow}=[draw=black, very thick, >=stealth]
+  \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
+
+  %% SIIR (two-strain) model
+  \coordinate (origin) at (0,-3);
+  \node [box] (S) at ($(origin)+(1,-2)$) {$\lab{S}$};
+  \node [box] (R1) at ($(S)+(6,1)$) {$\lab{R}_1$};
+  \node [box] (R2) at ($(S)+(6,-1)$) {$\lab{R}_2$};
+  \coordinate (overR) at ($(R1)+(0,1)$);
+  \coordinate (underR) at ($(R2)-(0,1)$);
+  \node [box,deme] (E1) at ($(S)+(2,1)$) {$\lab{E}_1$};
+  \node [box,deme] (E2) at ($(S)+(2,-1)$) {$\lab{E}_2$};
+  \node [box,ibox,deme] (I1) at ($(E1)+(2,0)$) {$\lab{I}_1$};
+  \node [box,ibox,deme] (I2) at ($(E2)+(2,0)$) {$\lab{I}_2$};
+  \draw [flow,->] (S) -- (E1) node [midway,below,rate] {$\lambda_1$};
+  \draw [flow,->] (E1) -- (I1);
+  \draw [flow,->] (I1) -- (R1);
+  \draw [flow,->] (S) -- (E2) node [midway,above,rate] {$\lambda_2$};
+  \draw [flow,->] (E2) -- (I2);
+  \draw [flow,->] (I2) -- (R2);
+  \draw [flow,->] (R1) -- (overR) -- (S |- overR) -- (S);
+  \draw [flow,->] (R2) -- (underR) -- (S |- underR) -- (S);
+  \coordinate (midSE1) at ($(S)!0.5!(E1)$);
+  \coordinate (midSE2) at ($(S)!0.5!(E2)$);
+  \draw [modulate,->] (I1.north west) .. controls ($(I1)+(-1,1)$) and ($(midSE1)+(0,1.8)$) .. (midSE1);
+  \draw [modulate,->] (I2.south west) .. controls ($(I2)+(-1,-1)$) and ($(midSE2)+(0,-1.8)$) .. (midSE2);
+\end{tikzpicture}

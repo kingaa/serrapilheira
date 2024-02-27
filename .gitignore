@@ -1,5 +1,6 @@
-tmp
+_site
 .DS_Store
+tmp
 figure
 cache
 papers

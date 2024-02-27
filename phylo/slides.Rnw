@@ -1,0 +1,17 @@
+\documentclass[t,aspectratio=169]{beamer}
+\hypersetup{unicode=true,bookmarksnumbered=false,bookmarksopen=false,breaklinks=true,colorlinks=false}
+
+\input{beamer}
+
+%% change fontsize of R code in presentation mode
+\let\oldshaded\shaded
+\let\endoldshaded\endshaded
+\renewenvironment{shaded}{\tiny\oldshaded}{\endoldshaded}
+
+%% change fontsize of output in presentation mode
+\let\oldverbatim\verbatim
+\let\endoldverbatim\endverbatim
+\renewenvironment{verbatim}{\tiny\oldverbatim}{\endoldverbatim}
+
+\input{main}
+

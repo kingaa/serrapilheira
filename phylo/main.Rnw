@@ -1,0 +1,2010 @@
+\input{header}
+\title{Simulation of Markov genealogy processes}
+\author{Aaron A. King}
+
+\usetikzlibrary{arrows.meta,positioning,decorations,calc,math}
+\graphicspath{{figs/}}
+
+\input{defs}
+
+\begin{document}
+
+<<knitr_opts,include=FALSE,cache=FALSE,purl=FALSE>>=
+prefix <- "phylo"
+source("../_includes/setup.R", local = knitr::knit_global())
+knitr::opts_chunk$set(echo=FALSE)
+@
+
+<<packages,echo=FALSE,cache=FALSE>>=
+library(tidyverse)
+library(ggtree)
+library(pomp)
+library(cowplot)
+library(viridis)
+library(phylopomp)
+stopifnot(getRversion() >= "4.3")
+stopifnot(packageVersion("pomp")>="5.5")
+stopifnot(packageVersion("phylopomp")>="0.10.3")
+theme_set(theme_bw(base_family="serif"))
+options(
+  pomp_archive_dir="results",
+  dplyr.summarise.inform=FALSE
+)
+set.seed(1159254136)
+@
+
+<<doFuture,echo=FALSE,cache=FALSE>>=
+library(doFuture)
+plan(multisession)
+set.seed(2488820)
+@
+
+\maketitle
+
+\mode<article>{\tableofcontents}
+
+\mode<presentation>{
+  \begin{frame}{Outline}
+    \tableofcontents
+  \end{frame}
+}
+
+\begin{frame}{Objectives}
+
+
+\end{frame}
+
+\section{Context}
+
+\AtBeginSection[]{
+  \begin{frame}<beamer>
+    \frametitle{Outline}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\nocite{King2016,Vaughan2019}
+
+\subsection{Example: emerging variants}
+
+\begin{frame}
+  {Example: surveillance for emerging SARS-CoV-2 variants}
+
+  \begin{onlyenv}<1>
+    \begin{center}
+      \includegraphics[width=0.6\textwidth]{figs//nextstrain_frequencies}\\
+      \includegraphics[width=0.6\textwidth]{figs//nextstrain_2019-2023}
+    \end{center}
+    \begin{flushright}
+      \href{https://nextstrain.org}{\texttt{nextstrain.org}} \citep{Hadfield2018}
+    \end{flushright}
+  \end{onlyenv}
+
+  \note<1>[item]{Monitoring novel strains for increased transmission potential.}
+  \note<1>[item]{Some multiply rapidly, others much less so.}
+  \note<1>[item]{All are replaced eventually.}
+
+  \note<2>[item]{Example: currently emerging variant: does it represent a mutant with invasion potential?}
+
+  \begin{onlyenv}<2,4>
+    \begin{center}
+      \includegraphics[width=0.75\textwidth]{figs//nextstrain_22-23}
+    \end{center}
+    \vspace{3ex}
+    \begin{flushright}
+      \href{https://nextstrain.org}{\texttt{nextstrain.org}} \citep{Hadfield2018}
+    \end{flushright}
+  \end{onlyenv}
+
+  \note<2>[item]{Implicitly, each strain competes with others for susceptibles.}
+
+  \note<3>[item]{Idealization: two strains compete for susceptibles.}
+  \note<3>[item]{\emph{Per capita} rates $\lambda_1$, $\lambda_2$.}
+  \note<3>[item]{Nonlinearity arises because of dependence on frequency of each strain.}
+  \note<3>[item]{We seek to \emph{estimate parameters} and \emph{compare models}.}
+
+  \begin{onlyenv}<3>
+    \begin{center}
+      \resizebox{0.5\linewidth}{!}{
+        \input{figs/siir}
+      }
+    \end{center}
+
+    \begin{equation*}
+      \begin{gathered}
+        \lambda_1=\beta_1\,\frac{I_1}{N} \qquad
+        \lambda_2=\beta_2\,\frac{I_2}{N}
+      \end{gathered}
+    \end{equation*}
+  \end{onlyenv}
+
+  \note<4>[item]{It is easy to connect case-report data with such a model.}
+  \note<4>[item]{How does one connect a genealogy?}
+  \note<4>[item]{For example, where was the lineage that is ancestral to the red clade in the summer of 2022?}
+  \note<4>[item]{We construct genealogies like this one by looking \emph{backward} in time, but the stochastic models tell us what happens as we move \emph{forward} in time.}
+
+  \note<5>[item]{There is variation in invasion rates and, importantly, there is \emph{frequency dependence}.}
+
+  \begin{onlyenv}<5>
+    <<covid-variants,fig.dim=c(9,81/16),out.width="67%">>=
+    read_csv("data/covid-variants.csv",comment="#") |>
+      rename(date=Day) |>
+      filter(
+        Code=="USA"|Code=="CAN",
+        date < "2023-12-18"
+      ) |>
+      select(-Entity,-Code) |>
+      rename(Other=non_who) |>
+      pivot_longer(
+        -date,
+        names_to="variant",
+        values_to="count"
+      ) -> dat
+
+    stopifnot(
+      dat |>
+        count(date) |>
+        filter(n!=40) |>
+        nrow()==0,
+      dat |>
+        count(date) |>
+        mutate(
+          date=as_date(date),
+          pd=date-lag(date)
+        ) |>
+        filter(!is.na(pd)) |>
+        count(pd) |>
+        nrow()==1
+    )
+
+    dat |>
+      filter(variant!="Recombinant") |>
+      mutate(
+        w=count*as.double(date-as_date("2020-01-01"))
+      ) |>
+      group_by(variant) |>
+      summarize(
+        mean_time=sum(w)/sum(count)
+      ) |>
+      ungroup() |>
+      arrange(mean_time) |>
+      pull(variant) -> varts
+
+    dat |>
+      filter(!variant%in%c("Recombinant")) |>
+      group_by(date,variant) |>
+      reframe(count=sum(count)) |>
+      ungroup() |>
+      group_by(date) |>
+      mutate(
+        variant=factor(variant,levels=varts),
+        tot=sum(count),
+        frequency=coalesce(count/sum(count),0),
+        frequency=if_else(tot<100,NA_real_,frequency)
+      ) |>
+      ungroup() -> dat1
+
+    dat1 |>
+      ggplot(aes(x=date,group=variant,fill=variant))+
+      scale_fill_viridis_d(option="E")+
+      lims(x=c(as_date("2021-01-01"),NA))+
+      theme_bw()+
+      theme(legend.background=element_rect(color=NA)) -> pl
+
+    pl+geom_area(aes(y=count))+
+      labs(
+        title="COVID-19 sequenced cases by variant",
+        subtitle="US + Canada, biweekly"
+      ) -> pl1
+    pl+geom_area(aes(y=frequency)) -> pl2
+
+    plot_grid(
+      plot_grid(
+        pl1+guides(fill="none")+labs(x=""),
+        pl2+guides(fill="none"),
+        align="v",axis="b",
+        ncol=1,
+        rel_heights=c(6,5)
+      ),
+      get_legend(pl1),
+      rel_widths=c(11,2),
+      nrow=1
+    )
+    @
+    \begin{flushright}
+      \citep{Mathieu2020}
+    \end{flushright}
+  \end{onlyenv}
+
+  \note<5>[item]{We have understood for some time how to do efficient inference using time series of cases.}
+
+  \note<5>[item]{How do we incorporate \emph{genomic data}?}
+
+  \note<5>[item]{This is the subject of \emph{phylodynamics}.}
+
+\end{frame}
+
+\subsection{Phylodynamics}
+
+\begin{frame}{What is phylodynamics?}
+  \begin{center}
+    \begin{minipage}{0.5\linewidth}
+      \begin{flushleft}
+        Broadly:\\
+        Phylodynamics is the project of inferring\\
+        \hspace{1em}\emph{determinants of epidemic spread}\\
+        using\\
+        \hspace{1em}\emph{genomic data from pathogen samples}.
+        \vspace{3ex}
+
+        In this talk:\\
+        Phylodynamics means using\\
+        \hspace{1em}\emph{genomic data}\\
+        to infer\\
+        \hspace{1em}\emph{stochastic dynamic transmission models}.
+      \end{flushleft}
+    \end{minipage}
+    \begin{minipage}{0.4\linewidth}
+      \begin{center}
+        \includegraphics[width=0.6\linewidth]{figs//nextstrain_22-23}
+        $$\big\Downarrow$$
+        \resizebox{0.6\linewidth}{!}{
+          \input{figs/siir}
+        }
+      \end{center}
+    \end{minipage}
+  \end{center}
+\end{frame}
+
+\subsection{Problems of phylodynamics}
+
+\begin{frame}{Core problems of phylodynamics}
+
+  \begin{onlyenv}<1>
+    \begin{center}
+      \resizebox{0.67\linewidth}{!}{
+        \begin{tikzpicture}[node distance=2.5cm,auto]
+          \usetikzlibrary{shapes,arrows,positioning}
+          \tikzstyle{concept}=[shape=ellipse, color=black, draw, fill=white, thick, minimum size=3em]
+          \tikzstyle{connection}=[color=black, thick, >=stealth]
+          \node [concept] (G) at (0,0) {genome sequences};
+          \node [concept] (T) at (2,-2) {genealogy};
+          \node [concept] (M) at (4,-4) {stochastic transmission model};
+          \coordinate (title) at (4.5,-0.6);
+          \coordinate (gt) at (1,-1);
+          \coordinate (tm) at (3,-3);
+          \draw[connection,->] (G) -- (T);
+          \draw[connection,->] (T) -- (M);
+          \node[right] at (title) {information flow};
+          \draw[thin,color=black!40!white]
+          (title) -- (intersection of title--gt and G--T)
+          (title) -- (intersection of title--tm and T--M);
+        \end{tikzpicture}
+      }
+    \end{center}
+  \end{onlyenv}
+
+  \note<1>[item]{The linkage between the model and the data is the genealogy that relates observed samples.}
+  \note<1>[item]{This allows us to split the problem up into two sub-problems.}
+  \note<1>[item]{A great deal of work has focused on the upper piece; much less on the lower.}
+
+  \note<2>[item]{In the ideal case, one can reconstruct the transmission tree perfectly.}
+  \note<2>[item]{But there are various reasons why the estimated tree might differ from the true transmission tree.}
+
+  \begin{onlyenv}<2>
+    \begin{center}
+      \resizebox{0.7\linewidth}{!}{
+        \input{figs/twodudes}
+      }
+    \end{center}
+  \end{onlyenv}
+
+  \note<3>[item]{To perform inference, we must construct a generative model.}
+  \note<3>[item]{
+    We will take the genealogy to be ``data''.
+    In effect, we are either assuming that one can accurately reconstruct the transmission tree or we are postponing this difficulty for another day.
+  }
+
+  \begin{onlyenv}<3>
+    \begin{center}
+      \resizebox{0.67\linewidth}{!}{
+        \begin{tikzpicture}[scale=1]
+          \usetikzlibrary{shapes,arrows,calc}
+          \tikzstyle{concept}=[shape=ellipse, color=black, draw, fill=white, thick, minimum size=3em]
+          \tikzstyle{connection}=[color=black, thick, >=stealth]
+          \tikzstyle{assump}=[text=red, inner sep=6pt]
+          \node [concept] (M) at (0,0) {stochastic transmission model};
+          \node [concept] (T) at (2,2) {genealogy};
+          \node [concept] (G) at (4,4) {genome sequences};
+          \coordinate (title) at (-0.5,3.5);
+          \coordinate (gt) at (3,3);
+          \coordinate (tm) at (1,1);
+          \draw[connection,->] (M) -- (T);
+          \draw[connection,->] (T) -- (G);
+          %% \draw[connection,->] (M) -- (T) node[assump,midway,right] {A\textsubscript{1}};
+          %% \draw[connection,->] (T) -- (G) node[assump,midway,right] {A\textsubscript{2}} (G);
+          \node[left] at (title) {prediction};
+          \draw[thin,color=black!40!white]
+          (title) -- (intersection of title--gt and G--T)
+          (title) -- (intersection of title--tm and T--M);
+        \end{tikzpicture}
+      }
+    \end{center}
+  \end{onlyenv}
+
+  %% \note<3>[item]{Two (rather strong) assumptions are commonly made.}
+
+  %% \begin{uncoverenv}<3-4>
+  %%   Assumptions:
+
+  %%   \textcolor{red}{A\textsubscript{1}}:
+  %%   Genealogy branchpoints faithfully represent transmission events.
+
+  %%   \textcolor{red}{A\textsubscript{2}}:
+  %%   Genome sequences faithfully represent genealogical relationships.
+  %% \end{uncoverenv}
+
+\end{frame}
+
+\section*{}
+
+\begin{frame}{Overview}
+  \begin{minipage}{0.6\linewidth}
+    \begin{itemize}
+    \item
+      We show how a given population process induces a unique genealogy process.
+    \item
+      \emph{Pruning} and \emph{obscuration} project a genealogy onto observable data.
+    \item
+      We derive the exact likelihood as the solution to a nonlinear filtering problem
+    \item
+      This equation can be solved by standard Monte Carlo methods.
+    \end{itemize}
+  \end{minipage}
+\end{frame}
+
+\section{Population process}
+
+\subsection{Examples}
+
+\begin{frame}{Population process}
+  \begin{center}
+    \resizebox{0.9\linewidth}{!}{
+      \begin{tikzpicture}[scale=1]
+        \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+        \tikzstyle{ibox}=[draw=darkgreen]
+        \tikzstyle{deme}=[fill=black!20!white]
+        \tikzstyle{label}=[font=\Large]
+        \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+        \tikzstyle{flow}=[draw=black, very thick, >=stealth]
+        \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
+
+        %% SEIRS model
+        \coordinate (origin) at (0,0);
+        \node[label] (lab) at (origin) {\textbf{A}};
+        \node [box] (S) at ($(origin)+(1,-1)$) {$\lab{S}$};
+        \node [box,deme] (E) at ($(S)+(2,0)$) {$\lab{E}$};
+        \node [box,ibox,deme] (I) at ($(E)+(2,0)$) {$\lab{I}$};
+        \node [box] (R) at ($(I)+(2,0)$) {$\lab{R}$};
+        \coordinate (overR) at ($(R)+(0,1)$);
+        \coordinate (midSE) at ($(S)!0.5!(E)$);
+        \draw [flow,->] (S) -- (E);
+        \draw [flow,->] (E) -- (I);
+        \draw [flow,->] (I) -- (R);
+        \draw [flow,->] (R) -- (overR) -- (S |- overR) -- (S);
+        \draw [modulate,->] (I.north west) .. controls ($(I)+(-1,1)$) and ($(midSE)+(0,1)$) .. (midSE);
+        \node[font=\normalsize] (demes) at ($(E)!0.5!(I)+(0,-1)$) {$\Demes=\{\lab{E},\lab{I}\}$};
+
+        %% SIIR (two-strain) model
+        \coordinate (origin) at (0,-3);
+        \node[label] (lab) at (origin) {\textbf{B}};
+        \node [box] (S) at ($(origin)+(1,-2)$) {$\lab{S}$};
+        \node [box] (R1) at ($(S)+(6,1)$) {$\lab{R}_1$};
+        \node [box] (R2) at ($(S)+(6,-1)$) {$\lab{R}_2$};
+        \coordinate (overR) at ($(R1)+(0,1)$);
+        \coordinate (underR) at ($(R2)-(0,1)$);
+        \node [box,deme] (E1) at ($(S)+(2,1)$) {$\lab{E}_1$};
+        \node [box,deme] (E2) at ($(S)+(2,-1)$) {$\lab{E}_2$};
+        \node [box,ibox,deme] (I1) at ($(E1)+(2,0)$) {$\lab{I}_1$};
+        \node [box,ibox,deme] (I2) at ($(E2)+(2,0)$) {$\lab{I}_2$};
+        \draw [flow,->] (S) -- (E1);
+        \draw [flow,->] (E1) -- (I1);
+        \draw [flow,->] (I1) -- (R1);
+        \draw [flow,->] (S) -- (E2);
+        \draw [flow,->] (E2) -- (I2);
+        \draw [flow,->] (I2) -- (R2);
+        \draw [flow,->] (R1) -- (overR) -- (S |- overR) -- (S);
+        \draw [flow,->] (R2) -- (underR) -- (S |- underR) -- (S);
+        \coordinate (midSE1) at ($(S)!0.5!(E1)$);
+        \coordinate (midSE2) at ($(S)!0.5!(E2)$);
+        \draw [modulate,->] (I1.north west) .. controls ($(I1)+(-1,1)$) and ($(midSE1)+(0,1.8)$) .. (midSE1);
+        \draw [modulate,->] (I2.south west) .. controls ($(I2)+(-1,-1)$) and ($(midSE2)+(0,-1.8)$) .. (midSE2);
+        \node[font=\normalsize] (demes) at ($(E2)!0.5!(I2)+(0,-2)$) {$\Demes=\{\lab{E}_1,\lab{I}_1,\lab{E}_2,\lab{I}_2\}$};
+
+        %% COVID model
+        \coordinate (origin) at (9,0);
+        \node[label] (lab) at (origin) {\textbf{C}};
+        \node [box] (S) at ($(origin)+(1,-2)$) {$\lab{S}$};
+        \node [box] (R) at ($(S)+(7,1)$) {$\lab{R}$};
+        \coordinate (overR) at ($(R)+(0,1)$);
+        \node [box,deme] (E) at ($(S)+(2,0)$) {$\lab{E}$};
+        \node [box,ibox,deme] (Ia) at ($(E)+(2,1)$) {$\lab{I_A}$};
+        \node [box,ibox,deme] (Is) at ($(E)+(2,-1)$) {$\lab{I_S}$};
+        \node [box] (H) at ($(Is)+(2,0)$) {$\lab{H}$};
+        \node [box] (D) at ($(H)+(2,0)$) {$\lab{D}$};
+        \draw [flow,->] (S) -- (E);
+        \draw [flow,->] (E) -- (Ia.west);
+        \draw [flow,->] (E) -- (Is.west);
+        \draw [flow,->] (Ia) -- (R);
+        \draw [flow,->] (Is) -- (H);
+        \draw [flow,->] (H) -- (R);
+        \draw [flow,->] (Is) -- (R);
+        \draw [flow,->] (H) -- (D);
+        \draw [flow,->] (R) -- (overR) -- (S |- overR) -- (S);
+        \coordinate (midSE) at ($(S)!0.5!(E)$);
+        \draw [modulate,->] (Ia.north west) .. controls ($(Ia.north west)+(165:1)$) and ($(midSE)+(0,2)$) .. (midSE);
+        \draw [modulate,->] (Is.south west) .. controls ($(Is.south west)+(195:1)$) and ($(midSE)+(0,-2)$) .. (midSE);
+        \node[font=\normalsize] (demes) at ($(Is)+(0,-1)$) {$\Demes=\{\lab{E},\lab{I_A},\lab{I_S}\}$};
+
+        %% SI2R (super-spreader) model
+        \coordinate (origin) at (9,-5);
+        \node[label] (lab) at (origin) {\textbf{D}};
+        \node [box] (S) at ($(origin)+(2,-1)$) {$\lab{S}$};
+        \node [box,deme] (E) at ($(S)+(2,0)$) {$\lab{E}$};
+        \node [box,ibox,deme] (Il) at ($(E)+(2,0)$) {$\lab{I_L}$};
+        \node [box,ibox,deme] (Ih) at ($(Il)+(0,-2)$) {$\lab{I_H}$};
+        \node [box] (R) at ($(Il)+(2,0)$) {$\lab{R}$};
+        \coordinate (overR) at ($(R)+(0,1)$);
+        \coordinate (midSE) at ($(S)!0.5!(E)$);
+        \draw [flow,->] (S) -- (E);
+        \draw [flow,->] (E) -- (Il);
+        \draw [flow,<->] (Il) -- (Ih);
+        \draw [flow,->] (Il) -- (R);
+        \draw [flow,->] (Ih.east) -- (R |- Ih.east) -- (R);
+        \draw [flow,->] (R) -- (overR) -- (S |- overR) -- (S);
+        \draw [modulate,->] (Il.north west) .. controls ($(Il.north west)+(135:0.8)$) and ($(midSE)+(0,1)$) .. (midSE);
+        \draw [modulate,->] (Ih.west) .. controls ($(Ih.west)+(180:0.8)$) and ($(midSE)+(0,-1)$) .. (midSE);
+        \node[font=\normalsize] (demes) at (midSE |- Ih) {$\Demes=\{\lab{E},\lab{I_L},\lab{I_H}\}$};
+      \end{tikzpicture}
+    }
+  \end{center}
+
+  \note<1>[item]{Examples of discretely-structured population models.}
+  \note<1>[item]{Shaded boxes contain pathogen lineages: \emph{demes}.}
+  \note<1>[item]{\textbf{(B)} Four-deme model shown before.}
+  \note<1>[item]{\textbf{(A)} An SEIRS model.
+    There are two demes:
+    $\Demes=\Set{\lab{E},\lab{I}}$.}
+  \note<1>[item]{\textbf{(C)} A three-deme model for SARS-CoV-2 infection.}
+  \note<1>[item]{\textbf{(D)} Three-deme model with heterogeneity in transmission behavior.}
+  \note<1>[item]{Obviously more complexity is possible.}
+  \note<1>[item]{\textbf{I will show how to compute likelihood of a genealogy \emph{for any given model} with discrete structure.}}
+
+\end{frame}
+
+\subsection{Formalization}
+
+\begin{frame}{Population process}
+
+  \begin{onlyenv}<1>
+    \begin{itemize}
+    \item
+      Non-explosive Markov jump process, $\Xr_t\in\Xspace$, $t\in\Rp$:\\
+      the \emph{population process}.
+    \item
+      Initial-state distribution, $p_0$:
+      \begin{equation*}
+        \Prob{\Xr_0\in\mathcal{E}}=\int_{\mathcal{E}}{p_0(x)\,\dd{x}}
+      \end{equation*}
+    \item
+      Jump rates:
+      $\alpha(t,x,x') = \text{rate of jump}\ x\to{x'}$
+      \begin{equation*}
+        \begin{gathered}
+          \alpha(t,x,x')\ge{0}, \qquad \int_{\Xspace}{\alpha(t,x,x')\,\dd{x'}}<\infty\\
+        \end{gathered}
+      \end{equation*}
+    \item
+      Multiple events at each jump are allowed.
+    \end{itemize}
+  \end{onlyenv}
+
+  \begin{onlyenv}<2>
+    Kolmogorov forward equation (KFE):\\
+    If
+    \begin{equation*}
+      \frac{\partial{w}}{\partial{t}}(t,x)=\int\!w(t,x')\,\alpha(t,x',x)\,\dd{x'}-\int\!w(t,x)\,\alpha(t,x,x')\,\dd{x'}
+    \end{equation*}
+    and
+    \begin{equation*}
+      w(0,x) = p_0(x)
+    \end{equation*}
+    then
+    \begin{equation*}
+      \int_{\mathcal{E}}\!{w(t,x)\,\dd{x}}=\Prob{\Xr_t\in\mathcal{E}}.
+    \end{equation*}
+
+    KFE is sometimes called the \emph{master equation} for $\Xr_t$.
+  \end{onlyenv}
+
+  \begin{onlyenv}<3>
+    \begin{center}
+      \resizebox{0.5\linewidth}{!}{
+        \begin{tikzpicture}[scale=1]
+          \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+          \tikzstyle{ibox}=[draw=darkgreen]
+          \tikzstyle{deme}=[fill=black!20!white]
+          \tikzstyle{label}=[font=\Large]
+          \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+          \tikzstyle{flow}=[draw=black, very thick, >=stealth]
+          \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
+
+          %% SEIRS model
+          \coordinate (origin) at (0,0);
+          \node [box] (S) at ($(origin)+(1,-1)$) {$\lab{S}$};
+          \node [box,deme] (E) at ($(S)+(2,0)$) {$\lab{E}$};
+          \node [box,ibox,deme] (I) at ($(E)+(2,0)$) {$\lab{I}$};
+          \node [box] (R) at ($(I)+(2,0)$) {$\lab{R}$};
+          \coordinate (overR) at ($(R)+(0,1)$);
+          \coordinate (midSE) at ($(S)!0.5!(E)$);
+          \draw [flow,->] (S) -- (E);
+          \draw [flow,->] (E) -- (I);
+          \draw [flow,->] (I) -- (R);
+          \draw [flow,->] (R) -- (overR) -- (S |- overR) -- (S);
+          \draw [modulate,->] (I.north west) .. controls ($(I)+(-1,1)$) and ($(midSE)+(0,1)$) .. (midSE);
+        \end{tikzpicture}
+      }
+    \end{center}
+  \end{onlyenv}
+
+  \begin{onlyenv}<3>
+    \vspace{3ex}
+    \begin{equation*}
+      \frac{\partial{w}}{\partial{t}}(t,x)=\int\!w(t,x')\,\alpha(t,x',x)\,\dd{x'}-\int\!w(t,x)\,\alpha(t,x,x')\,\dd{x'}
+    \end{equation*}
+  \end{onlyenv}
+
+  \begin{onlyenv}<4-5>
+    \begin{center}
+      \resizebox{0.6\linewidth}{!}{
+        \begin{tikzpicture}[scale=1.2]
+          \usetikzlibrary{shapes,arrows,positioning}
+          \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+          \tikzstyle{state}=[shape=ellipse, color=black, draw, font=\LARGE, fill=white, thick, minimum height=8em]
+          \tikzstyle{trans}=[color=black, font=\Large, thick, >=stealth]
+          \node[state] (base) at (0,0) {$x=(S,E,I,R)$};
+          \node[state] (trans) at (165:8) {$x'=(S-1,E+1,I,R)$};
+          \node[state] (prog) at (205:7) {$x'=(S,E-1,I+1,R)$};
+          \node[state] (recov) at (305:5) {$x'=(S,E,I-1,R+1)$};
+          \node[state] (wane) at (350:8) {$x'=(S+1,E,I,R-1)$};
+          \node[state] (sample) at (18:7.5) {$x'=(S,E,I,R)$};
+          \draw[trans,->] (base) -- (trans) node[midway,above,sloped] {$\lab{Trans}$};
+          \draw[trans,->] (base) -- (prog) node[midway,above,sloped] {$\lab{Prog}$};
+          \draw[trans,->] (base) -- (recov) node[midway,above,sloped] {$\lab{Recov}$};
+          \draw[trans,->] (base) -- (wane) node[midway,above,sloped] {$\lab{Wane}$};
+          \draw[trans,->] (base) -- (sample) node[midway,above,sloped] {$\lab{Sample}$};
+          \node[font=\LARGE] (U) at (250:7) {$\Jumps=\Set{\lab{Trans},\lab{Prog},\lab{Recov},\lab{Wane},\lab{Sample}}$};
+        \end{tikzpicture}
+      }
+    \end{center}
+  \end{onlyenv}
+
+  \begin{onlyenv}<4>
+    \begin{equation*}
+      \frac{\partial{w}}{\partial{t}}(t,x)=\sum_{u\in\Jumps}\left\{\int\!w(t,x')\,\alpha_u(t,x',x)\,\dd{x'}-\int\!w(t,x)\,\alpha_u(t,x,x')\,\dd{x'}\right\}
+    \end{equation*}
+  \end{onlyenv}
+
+  \begin{onlyenv}<5>
+    \fontsize{6pt}{8pt}\selectfont
+    \begin{equation*}
+      \begin{split}
+        \frac{\partial{w}}{\partial{t}}(t,S,E,I,R)=&
+        \frac{\beta(t)\,(S+1)\,I}{N}\,w(t,S+1,E-1,I,R)
+        -\frac{\beta(t)\,S\,I}{N}\,w(t,S,E,I,R)
+        +\sigma\,(E+1)\,w(t,S,E+1,I-1,R)
+        -\sigma\,E\,w(t,S,E,I,R)\\
+        &+\gamma\,(I+1)\,w(t,S,E,I+1,R-1)
+        -\gamma\,I\,w(t,S,E,I,R)
+        +\omega\,(R+1)\,w(t,S-1,E,I,R+1)
+        -\omega\,R\,w(t,S,E,I,R)
+      \end{split}
+    \end{equation*}
+    \normalsize
+  \end{onlyenv}
+
+\end{frame}
+
+\section{Genealogy process}
+
+\subsection{Genealogies}
+
+\begin{frame}{What is a genealogy?}
+
+  <<geneal0,results="hide">>=
+  freeze(
+    seed=522390503,
+    simulate(
+      "SEIR",
+      Beta=1,sigma=0.5,gamma=0.1,psi=0.4,omega=0.1,
+      S0=10,E0=1,I0=1,R0=0,
+      time=10
+    )
+  ) -> x
+
+  pal <- c("#00274CFF","#FFCB05FF")
+  @
+
+  \note<1>[item]{We are going to show how a population process induces a unique genealogy process.}
+  \note<1>[item]{Therefore, we first need to understand what a genealogy is.}
+  \note<1>[item]{A genealogy describes who is related to whom, and how closely.}
+  \note<1>[item]{Each subset of samples has a most recent common ancestor.}
+  \note<1>[item]{Most commonly represented as a time-calibrated, labeled tree.}
+  \note<1>[item]{Each lineage, at each point in time, was in one or another of the demes.}
+  \note<2>[item]{We can represent each lineage's deme-history using color.}
+  \note<2>[item]{These are only the lineages that were at some point sampled.
+    There are, of course, unsampled lineages as well.}
+  \note<3>[item]{Note there are three kinds of nodes:
+    tips, samples, and internal nodes.}
+  \note<3>[item]{The horizontal position of nodes in the figure is significant: to each node we associate a time.}
+  \note<3>[item]{In the case of leaves, the associated time is that of the extant population.}
+
+  \begin{onlyenv}<1>
+    \begin{center}
+      <<geneal1,dependson="geneal0",fig.dim=c(6,54/16),out.width="60%",results="hide">>=
+      x |>
+        plot(
+          points=TRUE,
+          prune=TRUE,
+          obscure=TRUE,
+          palette="#B3B3B3FF"
+        )+
+        labs(x="time")
+      @
+    \end{center}
+  \end{onlyenv}
+
+  \begin{onlyenv}<2>
+    \begin{center}
+      <<geneal2,dependson="geneal0",fig.dim=c(6,54/16),out.width="60%",results="hide">>=
+      x |>
+        plot(
+          points=TRUE,
+          prune=TRUE,
+          obscure=FALSE,
+          palette=pal
+        )+
+        labs(x="time")
+      @
+    \end{center}
+  \end{onlyenv}
+
+  \begin{onlyenv}<3>
+    \begin{center}
+      <<geneal3,dependson="geneal0",fig.dim=c(6,54/16),out.width="60%",results="hide">>=
+      x |>
+        plot(
+          points=TRUE,
+          prune=FALSE,
+          obscure=FALSE,
+          palette=pal
+        )+
+        labs(x="time")
+      @
+    \end{center}
+  \end{onlyenv}
+
+\end{frame}
+
+\subsection{Induced genealogy process}
+
+\begin{frame}{Event types}
+
+  \note<1>[item]{Now we are in a position to describe how the population process induces the genealogy process.}
+  \note<1>[item]{Each event in the population process produces a change in the genealogy.}
+  \note<1>[item]{We use our simplest example, the SEIRS model, to illustrate.}
+
+  \begin{onlyenv}<1>
+    \begin{center}
+      \resizebox{0.5\linewidth}{!}{
+        \begin{tikzpicture}[scale=1]
+          \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+          \tikzstyle{ibox}=[draw=darkgreen]
+          \tikzstyle{deme}=[fill=black!20!white]
+          \tikzstyle{label}=[font=\Large]
+          \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+          \tikzstyle{flow}=[draw=black, very thick, >=stealth]
+          \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
+
+          %% SEIRS model
+          \coordinate (origin) at (0,0);
+          \node [box] (S) at ($(origin)+(1,-1)$) {$\lab{S}$};
+          \node [box,deme] (E) at ($(S)+(2,0)$) {$\lab{E}$};
+          \node [box,ibox,deme] (I) at ($(E)+(2,0)$) {$\lab{I}$};
+          \node [box] (R) at ($(I)+(2,0)$) {$\lab{R}$};
+          \coordinate (overR) at ($(R)+(0,1)$);
+          \coordinate (midSE) at ($(S)!0.5!(E)$);
+          \draw [flow,->] (S) -- (E);
+          \draw [flow,->] (E) -- (I);
+          \draw [flow,->] (I) -- (R);
+          \draw [flow,->] (R) -- (overR) -- (S |- overR) -- (S);
+          \draw [modulate,->] (I.north west) .. controls ($(I)+(-1,1)$) and ($(midSE)+(0,1)$) .. (midSE);
+          \node[font=\normalsize] (demes) at ($(E)!0.5!(I)+(0,-1)$) {$\Demes=\{\lab{E},\lab{I}\}$};
+        \end{tikzpicture}
+      }
+    \end{center}
+  \end{onlyenv}
+
+  \note<2>[item]{Another view of this model, in terms of the state transitions.}
+  \note<2,5>[item]{$\Jumps$ is the set of distinct \emph{event types}.
+    Each of these has a distinct effect on the genealogy.}
+  \note<5>[item]{Five jumps, one of each of the pure types.}
+
+  \begin{onlyenv}<2,5>
+    \begin{center}
+      \resizebox{0.8\linewidth}{!}{
+        \begin{tikzpicture}[scale=1.2]
+          \usetikzlibrary{shapes,arrows,positioning}
+          \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+          \tikzstyle{state}=[shape=ellipse, color=black, draw, font=\LARGE, fill=white, thick, minimum height=8em]
+          \tikzstyle{trans}=[color=black, font=\Large, thick, >=stealth]
+          \node[state] (base) at (0,0) {$x=(S,E,I,R)$};
+          \node[state] (trans) at (165:8) {$x'=(S-1,E+1,I,R)$};
+          \node[state] (prog) at (205:7) {$x'=(S,E-1,I+1,R+1)$};
+          \node[state] (recov) at (305:5) {$x'=(S,E,I-1,R+1)$};
+          \node[state] (wane) at (350:8) {$x'=(S+1,E,I,R-1)$};
+          \node[state] (sample) at (18:7.5) {$x'=(S,E,I,R)$};
+          \draw[trans,->] (base) -- (trans) node[midway,above,sloped] {$\lab{Trans}$};
+          \draw[trans,->] (base) -- (prog) node[midway,above,sloped] {$\lab{Prog}$};
+          \draw[trans,->] (base) -- (recov) node[midway,above,sloped] {$\lab{Recov}$};
+          \draw[trans,->] (base) -- (wane) node[midway,above,sloped] {$\lab{Wane}$};
+          \draw[trans,->] (base) -- (sample) node[midway,above,sloped] {$\lab{Sample}$};
+          \node[font=\LARGE] (U) at (250:7) {$\Jumps=\Set{\lab{Trans},\lab{Prog},\lab{Recov},\lab{Wane},\lab{Sample}}$};
+        \end{tikzpicture}
+      }
+    \end{center}
+  \end{onlyenv}
+
+  \note<2>{Markov state transition diagram for the SEIRS model.}
+  \note<2>{The state, $x$, is characterized by four occupancies.}
+  \note<2>{From a given state $x$, there are five possible kinds of jumps $x\mapsto{x'}$.}
+  \note<2>{Accordingly, the set, $\Jumps$, of jump marks has five elements.}
+  \note<2>{Each of these is one of 5 different types: birth, migration, death, sample, neutral.}
+
+  \note<3>[item]{We can break $\alpha$ up by type.}
+  \note<3>[item]{Types differ in terms of their effect on the genealogy.}
+
+  \begin{onlyenv}<3>
+
+    If we write
+    $$\alpha(t,x,x')=\sum_{u\in\Jumps}{\alpha_u(t,x,x')},$$
+    the KFE becomes
+    \begin{equation*}
+      \frac{\partial{w}}{\partial{t}}(t,x)=\sum_u\int\!w(t,x')\,\alpha_u(t,x',x)\,\dd{x'}-\sum_u\int\!w(t,x)\,\alpha_u(t,x,x')\,\dd{x'}
+    \end{equation*}
+  \end{onlyenv}
+
+  \note<4>{Local structure of the genealogy in a neighborhood of an event.}
+  \note<4>[item]{\textbf{(A)} A birth-type jump results in the branching of one or more child lineages from the parent.}
+  \note<4>[item]{\textbf{(B)} A death-type event causes the extinction of a lineage.}
+  \note<4>[item]{\textbf{(C)} A migration-type event results in the movement of one or more lineages from one deme to another.}
+  \note<4>[item]{\textbf{(D)} In a sample-type event, one or more sample nodes (blue circles) are inserted.}
+  \note<4>[item]{\textbf{(E)} A neutral-type event has no effect on the genealogy.}
+  \note<4>[item]{\textbf{(F-H)} Compound events.}
+
+  \begin{onlyenv}<4>
+    \begin{center}
+      \resizebox{0.75\linewidth}{!}{
+        \begin{tikzpicture}[scale=2]
+          \usetikzlibrary{shapes,arrows,positioning}
+          \usetikzlibrary{arrows.meta,positioning,decorations}
+          \tikzstyle{label}=[font=\Large]
+          \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+          \tikzstyle{deme1}=[color=darkblue, line width=3pt]
+          \tikzstyle{deme1H}=[color=darkblue, line width=3pt, densely dotted]
+          \tikzstyle{deme2}=[color=maize, line width=3pt]
+          \tikzstyle{deme2H}=[color=maize, line width=3pt, densely dotted]
+          \tikzstyle{axis}=[color=black, thick, >=stealth]
+          \tikzstyle{timepoint}=[color=red!70!black]
+
+          \def\ysp{0.2} %% spacing between adjacent lineages
+
+          %% Birth-type event
+          \begin{scope}[shift={(0,0)}]
+            \coordinate (origin) at (0,0);
+            \node[label] (lab) at (origin) {\textbf{A}};
+            \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+            \coordinate (right) at ($(left)+(1,0)$);
+            \coordinate (mid) at ($(left)!0.5!(right)$);
+            \coordinate (rlab) at ($(right)+(0.1,0)$);
+            \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+            \coordinate (bright) at (rlab |- bleft);
+            \coordinate (temp) at ($(origin)+(0,-4*\ysp)$);
+            \coordinate (temp1) at ($(temp)+(0,\ysp)$);
+            \coordinate (temp2) at ($(temp)-(0,\ysp)$);
+            \draw[deme1] (mid |- temp) -- (mid |- temp1) -- (right |- temp1);
+            \draw[deme1] (mid |- temp) -- (mid |- temp2) -- (right |- temp2);
+            \draw[deme2] (left |- temp) -- (right |- temp);
+            \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+            \foreach \y in {1,7} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {6,8} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {2,7} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \draw[timepoint] (mid) -- (mid |- bleft);
+            \draw[axis,->] (bleft) -- (bright);
+            \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+          \end{scope}
+
+          %% Death-type event
+          \begin{scope}[shift={(2,0)}]
+            \coordinate (origin) at (0,0);
+            \node[label] (lab) at (origin) {\textbf{B}};
+            \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+            \coordinate (right) at ($(left)+(1,0)$);
+            \coordinate (mid) at ($(left)!0.5!(right)$);
+            \coordinate (rlab) at ($(right)+(0.1,0)$);
+            \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+            \coordinate (bright) at (rlab |- bleft);
+            \foreach \y in {1,2,6} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {3,8} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \coordinate (temp) at ($(origin)+(0,-4*\ysp)$);
+            \draw[deme2H] (left |- temp) -- (mid |- temp);
+            \node[text=red,font=\Huge] at (mid |- temp) {$\times$};
+            \foreach \y in {5,7} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \draw[timepoint] (mid) -- (mid |- bleft);
+            \draw[axis,->] (bleft) -- (bright);
+            \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+          \end{scope}
+
+          %% Migration-type event
+          \begin{scope}[shift={(4,0)}]
+            \coordinate (origin) at (0,0);
+            \node[label] (lab) at (origin) {\textbf{C}};
+            \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+            \coordinate (right) at ($(left)+(1,0)$);
+            \coordinate (mid) at ($(left)!0.5!(right)$);
+            \coordinate (rlab) at ($(right)+(0.1,0)$);
+            \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+            \coordinate (bright) at (rlab |- bleft);
+            \foreach \y in {2,3,8} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \coordinate (temp) at ($(origin)+(0,-4*\ysp)$);
+            \draw[deme1] (left |- temp) -- (mid |- temp);
+            \draw[deme2] (mid |- temp) -- (right |- temp);
+            \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+            \foreach \y in {1,5} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {6,7} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \draw[timepoint] (mid) -- (mid |- bleft);
+            \draw[axis,->] (bleft) -- (bright);
+            \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+          \end{scope}
+
+          %% Sample event
+          \begin{scope}[shift={(6,0)}]
+            \coordinate (origin) at (0,0);
+            \node[label] (lab) at (origin) {\textbf{D}};
+            \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+            \coordinate (right) at ($(left)+(1,0)$);
+            \coordinate (mid) at ($(left)!0.5!(right)$);
+            \coordinate (rlab) at ($(right)+(0.1,0)$);
+            \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+            \coordinate (bright) at (rlab |- bleft);
+            \foreach \y in {2,5} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {1,4,7} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {3,6,8} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \coordinate (temp) at ($(origin)+(0,-2*\ysp)$);
+            \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+            \coordinate (temp) at ($(origin)+(0,-6*\ysp)$);
+            \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+            \draw[timepoint] (mid) -- (mid |- bleft);
+            \draw[axis,->] (bleft) -- (bright);
+            \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+          \end{scope}
+
+          %% Neutral-type event
+          \begin{scope}[shift={(0,-2)}]
+            \coordinate (origin) at (0,0);
+            \node[label] (lab) at (origin) {\textbf{E}};
+            \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+            \coordinate (right) at ($(left)+(1,0)$);
+            \coordinate (mid) at ($(left)!0.5!(right)$);
+            \coordinate (rlab) at ($(right)+(0.1,0)$);
+            \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+            \coordinate (bright) at (rlab |- bleft);
+            \foreach \y in {4,6,7} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {1,2,5} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {3,8} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \draw[timepoint] (mid) -- (mid |- bleft);
+            \draw[axis,->] (bleft) -- (bright);
+            \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+          \end{scope}
+
+          %% Compound birth/death (Moran) event
+          \begin{scope}[shift={(2,-2)}]
+            \coordinate (origin) at (0,0);
+            \node[label] (lab) at (origin) {\textbf{F}};
+            \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+            \coordinate (right) at ($(left)+(1,0)$);
+            \coordinate (mid) at ($(left)!0.5!(right)$);
+            \coordinate (rlab) at ($(right)+(0.1,0)$);
+            \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+            \coordinate (bright) at (rlab |- bleft);
+            \coordinate (temp) at ($(origin)+(0,-4*\ysp)$);
+            \coordinate (temp1) at ($(temp)+(0,\ysp)$);
+            \draw[deme1] (mid |- temp) -- (mid |- temp1) -- (right |- temp1);
+            \draw[deme1] (left |- temp) -- (right |- temp);
+            \draw[deme2H] (left |- temp1) -- (mid |- temp1);
+            \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+            \node[text=red,font=\Huge] at (mid |- temp1) {$\times$};
+            \foreach \y in {2,5} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {1,7} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {6,8} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \draw[timepoint] (mid) -- (mid |- bleft);
+            \draw[axis,->] (bleft) -- (bright);
+            \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+          \end{scope}
+
+          %% Compound sample/death event
+          \begin{scope}[shift={(4,-2)}]
+            \coordinate (origin) at (0,0);
+            \node[label] (lab) at (origin) {\textbf{G}};
+            \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+            \coordinate (right) at ($(left)+(1,0)$);
+            \coordinate (mid) at ($(left)!0.5!(right)$);
+            \coordinate (rlab) at ($(right)+(0.1,0)$);
+            \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+            \coordinate (bright) at (rlab |- bleft);
+            \coordinate (temp) at ($(origin)+(0,-5*\ysp)$);
+            \draw[deme1] (left |- temp) -- (mid |- temp);
+            \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+            \node[text=red,font=\Huge] at (mid |- temp) {$\times$};
+            \foreach \y in {1,6} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {2,3,8} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {4,7} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \draw[timepoint] (mid) -- (mid |- bleft);
+            \draw[axis,->] (bleft) -- (bright);
+            \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+          \end{scope}
+
+          %% Compound event
+          \begin{scope}[shift={(6,-2)}]
+            \coordinate (origin) at (0,0);
+            \node[label] (lab) at (origin) {\textbf{H}};
+            \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+            \coordinate (right) at ($(left)+(1,0)$);
+            \coordinate (mid) at ($(left)!0.5!(right)$);
+            \coordinate (rlab) at ($(right)+(0.1,0)$);
+            \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+            \coordinate (bright) at (rlab |- bleft);
+            \coordinate (temp) at ($(origin)+(0,-3*\ysp)$);
+            \draw[deme2] (left |- temp) -- (mid |- temp);
+            \draw[deme1] (mid |- temp) -- (right |- temp);
+            \coordinate (temp1) at ($(temp)+(0,-\ysp)$);
+            \draw[deme1] (mid |- temp) -- (mid |- temp1) -- (right |- temp1);
+            \coordinate (temp1) at ($(temp1)+(0,-\ysp)$);
+            \draw[deme1] (mid |- temp) -- (mid |- temp1) -- (right |- temp1);
+            \coordinate (temp1) at ($(temp1)+(0,-\ysp)$);
+            \draw[deme1] (mid |- temp) -- (mid |- temp1) -- (right |- temp1);
+            \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+            \foreach \y in {2,7} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme1] (left |- temp) -- (right |- temp);
+            }
+            \foreach \y in {1,8} {
+              \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+              \draw[deme2] (left |- temp) -- (right |- temp);
+            }
+            \draw[timepoint] (mid) -- (mid |- bleft);
+            \draw[axis,->] (bleft) -- (bright);
+            \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+          \end{scope}
+        \end{tikzpicture}
+      }
+    \end{center}
+  \end{onlyenv}
+
+\end{frame}
+
+\begin{frame}
+  {A population process induces a genealogy process}
+
+  \begin{itemize}
+  \item
+    $\Gr_t$ is a stochastic process on the space of genealogies.
+  \item
+    The map $\Xr\mapsto\Gr$ is random.
+  \item
+    \textbf{Key assumption:}
+    Lineages within a deme are \emph{exchangeable}.\\
+    There is no more structure than is implied by the population process.
+  \item
+    Simulation code on \href{https://github.com/kingaa/phylopomp/}{\texttt{github.com/kingaa/phylopomp}}
+  \item
+    Animations at
+    \url{https://kingaa.github.io/manuals/phylopomp/vignettes/}
+  \end{itemize}
+
+\end{frame}
+
+%% \section{History process}
+
+%% \begin{frame}{History process}
+
+%%   Encapsulates the entire history of $\X$ up to time $t$.
+
+%%   $\Hr_t$ is trivially Markov.
+
+%% \end{frame}
+
+\section{Pruned and obscured genealogies}
+
+<<geneal0,results="hide">>=
+@
+
+\begin{frame}{Full genealogy}
+  <<upo1,fig.dim=c(6,54/16),out.width="70%",results="hide">>=
+  x |>
+    plot(points=TRUE,prune=FALSE,obscure=FALSE,palette=pal)+
+    geom_vline(xintercept=10,linewidth=0.2,color="black")+
+    labs(x="time")
+  @
+\end{frame}
+
+\begin{frame}{Pruned genealogy}
+  <<upo2,fig.dim=c(6,54/16),out.width="70%",results="hide">>=
+  x |>
+    plot(points=TRUE,prune=TRUE,obscure=FALSE,palette=pal)+
+    geom_vline(xintercept=10,linewidth=0.2,color="black")+
+    labs(x="time")
+  @
+  \note[item]{Pruning is a deterministic process.}
+  \note[item]{Let us re-examine the local structure.}
+\end{frame}
+
+\begin{frame}{Local structure of a pruned genealogy}
+
+  \begin{center}
+    \resizebox{0.4\linewidth}{!}{
+      \begin{tikzpicture}[scale=2]
+        \usetikzlibrary{shapes,arrows,positioning}
+        \usetikzlibrary{arrows.meta,positioning,decorations}
+        \tikzstyle{label}=[font=\Large]
+        \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+        \tikzstyle{deme1}=[color=maize, line width=3pt]
+        \tikzstyle{deme1H}=[color=maize, line width=3pt, densely dotted]
+        \tikzstyle{deme2}=[color=darkblue, line width=3pt]
+        \tikzstyle{deme2H}=[color=darkblue, line width=3pt, densely dotted]
+        \tikzstyle{axis}=[color=black, thick, >=stealth]
+        \tikzstyle{timepoint}=[color=red!70!black]
+
+        \def\ysp{0.2} %% spacing between adjacent lineages
+
+        %% Birth-type event, unpruned
+        \begin{scope}[shift={(0,0)}]
+          \coordinate (origin) at (0,0);
+          \node[label] (lab) at (origin) {\textbf{A}};
+          \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+          \coordinate (right) at ($(left)+(1,0)$);
+          \coordinate (mid) at ($(left)!0.5!(right)$);
+          \coordinate (rlab) at ($(right)+(0.1,0)$);
+          \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+          \coordinate (bright) at (rlab |- bleft);
+          \coordinate (temp) at ($(origin)+(0,-3*\ysp)$);
+          \coordinate (temp1) at ($(temp)+(0,-\ysp)$);
+          \draw[deme2] (mid |- temp) -- (mid |- temp1) -- (right |- temp1);
+          \draw[deme1] (left |- temp) -- (right |- temp);
+          \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+          \foreach \y in {1,2,7} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {5,6,8} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme2] (left |- temp) -- (right |- temp);
+          }
+          \draw[timepoint] (mid) -- (mid |- bleft);
+          \draw[axis,->] (bleft) -- (bright);
+          \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+        \end{scope}
+
+        %% Birth-type event, pruned
+        \begin{scope}[shift={(0,-2)}]
+          \coordinate (origin) at (0,0);
+          \node[label] (lab) at (origin) {\textbf{B}};
+          \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+          \coordinate (right) at ($(left)+(1,0)$);
+          \coordinate (mid) at ($(left)!0.5!(right)$);
+          \coordinate (rlab) at ($(right)+(0.1,0)$);
+          \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+          \coordinate (bright) at (rlab |- bleft);
+          \coordinate (temp) at ($(origin)+(0,-3*\ysp)$);
+          \coordinate (temp1) at ($(temp)+(0,-\ysp)$);
+          \draw[deme1] (left |- temp) -- (mid |- temp);
+          \draw[deme1H] (mid |- temp) -- (right |- temp);
+          \draw[deme2] (mid |- temp) -- (mid |- temp1) -- (right |- temp1);
+          \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+          \foreach \y in {7} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1H] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {1,2} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {5,6} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme2H] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {8} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme2] (left |- temp) -- (right |- temp);
+          }
+          \draw[timepoint] (mid) -- (mid |- bleft);
+          \draw[axis,->] (bleft) -- (bright);
+          \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+        \end{scope}
+
+        %% Migration-type event, unpruned
+        \begin{scope}[shift={(2,0)}]
+          \coordinate (origin) at (0,0);
+          \node[label] (lab) at (origin) {\textbf{C}};
+          \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+          \coordinate (right) at ($(left)+(1,0)$);
+          \coordinate (mid) at ($(left)!0.5!(right)$);
+          \coordinate (rlab) at ($(right)+(0.1,0)$);
+          \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+          \coordinate (bright) at (rlab |- bleft);
+          \foreach \y in {2,3,8} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1] (left |- temp) -- (right |- temp);
+          }
+          \coordinate (temp) at ($(origin)+(0,-4*\ysp)$);
+          \draw[deme1] (left |- temp) -- (mid |- temp);
+          \draw[deme2] (mid |- temp) -- (right |- temp);
+          \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+          \foreach \y in {1,5} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme2] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {6,7} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1] (left |- temp) -- (right |- temp);
+          }
+          \draw[timepoint] (mid) -- (mid |- bleft);
+          \draw[axis,->] (bleft) -- (bright);
+          \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+        \end{scope}
+
+        %% Migration-type event, pruned
+        \begin{scope}[shift={(2,-2)}]
+          \coordinate (origin) at (0,0);
+          \node[label] (lab) at (origin) {\textbf{D}};
+          \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+          \coordinate (right) at ($(left)+(1,0)$);
+          \coordinate (mid) at ($(left)!0.5!(right)$);
+          \coordinate (rlab) at ($(right)+(0.1,0)$);
+          \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+          \coordinate (bright) at (rlab |- bleft);
+          \coordinate (temp) at ($(origin)+(0,-4*\ysp)$);
+          \draw[deme1] (left |- temp) -- (mid |- temp);
+          \draw[deme2] (mid |- temp) -- (right |- temp);
+          \node[text=darkgreen,font=\Huge] at (mid |- temp) {$\bullet$};
+          \foreach \y in {2,3,8} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1H] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {6,7} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {1} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme2H] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {5} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme2] (left |- temp) -- (right |- temp);
+          }
+          \draw[timepoint] (mid) -- (mid |- bleft);
+          \draw[axis,->] (bleft) -- (bright);
+          \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+        \end{scope}
+
+        %% Sample event, unpruned
+        \begin{scope}[shift={(4,0)}]
+          \coordinate (origin) at (0,0);
+          \node[label] (lab) at (origin) {\textbf{E}};
+          \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+          \coordinate (right) at ($(left)+(1,0)$);
+          \coordinate (mid) at ($(left)!0.5!(right)$);
+          \coordinate (rlab) at ($(right)+(0.1,0)$);
+          \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+          \coordinate (bright) at (rlab |- bleft);
+          \foreach \y in {2,5} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {1,4,7} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme2] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {3,6,8} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1] (left |- temp) -- (right |- temp);
+          }
+          \coordinate (temp) at ($(origin)+(0,-2*\ysp)$);
+          \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+          \coordinate (temp) at ($(origin)+(0,-6*\ysp)$);
+          \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+          \draw[timepoint] (mid) -- (mid |- bleft);
+          \draw[axis,->] (bleft) -- (bright);
+          \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+        \end{scope}
+
+        %% Sample event, pruned
+        \begin{scope}[shift={(4,-2)}]
+          \coordinate (origin) at (0,0);
+          \node[label] (lab) at (origin) {\textbf{F}};
+          \coordinate (left) at ($(origin)+(0.1,-0.1)$);
+          \coordinate (right) at ($(left)+(1,0)$);
+          \coordinate (mid) at ($(left)!0.5!(right)$);
+          \coordinate (rlab) at ($(right)+(0.1,0)$);
+          \coordinate (bleft) at ($(left)+(0,-8*\ysp)$);
+          \coordinate (bright) at (rlab |- bleft);
+          \coordinate (temp) at ($(origin)+(0,-2*\ysp)$);
+          \draw[deme1] (left |- temp) -- (mid |- temp);
+          \draw[deme1H] (mid |- temp) -- (right |- temp);
+          \foreach \y in {3,8} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1H] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {5,6} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme1] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {1,4} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme2] (left |- temp) -- (right |- temp);
+          }
+          \foreach \y in {7} {
+            \coordinate (temp) at ($(origin)+(0,-\y*\ysp)$);
+            \draw[deme2H] (left |- temp) -- (right |- temp);
+          }
+          \coordinate (temp) at ($(origin)+(0,-2*\ysp)$);
+          \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+          \coordinate (temp) at ($(origin)+(0,-6*\ysp)$);
+          \node[text=royalblue,font=\Huge] at (mid |- temp) {$\bullet$};
+          \draw[timepoint] (mid) -- (mid |- bleft);
+          \draw[axis,->] (bleft) -- (bright);
+          \node[xshift=1ex] (tlab) at (bright.east) {$t$};
+        \end{scope}
+      \end{tikzpicture}
+    }
+  \end{center}
+
+  \begin{onlyenv}<1>
+    Top row shows the \emph{unpruned genealogy} in neighborhood of an event.\\
+    Bottom row shows the corresponding \emph{pruned genealogy}.
+  \end{onlyenv}
+
+  \begin{onlyenv}<2>
+    For $x\in\Xspace$, $i\in\Demes$, $n_i(x)$ is the \emph{occupancy} of deme $i$ when the system is in state $x$.\\
+    In panel A $n=(n_{\lab{blue}},n_{\lab{yellow}})=(4,4)$;
+    in panel C $n=(3,5)$;
+  \end{onlyenv}
+
+  \note<2>[item]{In panel E, $n=(3,5)$.}
+
+  \begin{onlyenv}<3>
+    For $u\in\Jumps$, $i\in\Demes$, $r^u_i$ is the \emph{production} of event $u$ in deme $i$.\\
+    In panel A, $r=(r_{\lab{blue}},r_{\lab{yellow}})=(1,1)$;
+    in panel E, $r=(0,2)$.
+  \end{onlyenv}
+
+  \note<3>[item]{In panel C, $r=(1,0)$.}
+
+  \begin{onlyenv}<4>
+    The \emph{lineage count}, $\ell_i(t)$, is the number of unpruned lineages in deme $i$ at time $t$.\\
+    In this case, for all panels, $\ell=(2,2)$.\\
+  \end{onlyenv}
+
+  \begin{onlyenv}<5>
+    The \emph{saturation}, $s_i$, is the number of unpruned lineages in deme $i$ \emph{descending} from the event.\\
+    In panels B and D, $s=(1,0)$; in panel F, $s=(0,1)$.
+  \end{onlyenv}
+
+  \begin{onlyenv}<6>
+    Obviously, $s_i\le{r_i}\le{n_i}$ and $s_i\le{\ell_i}\le{n_i}$.
+  \end{onlyenv}
+
+\end{frame}
+
+\begin{frame}{Pruned genealogy}
+  <<upo2,fig.dim=c(6,54/16),out.width="60%",results="hide">>=
+  @
+
+  A pruned genealogy is specified by two functions of time, $(\Y,\Z)$:\\
+  $\Z_t$ gives the local topological structure;
+  $\Y_t$ gives the local coloring.
+
+  \note[item]{We do not observe the coloring.}
+\end{frame}
+
+\begin{frame}{Obscured genealogy}
+  <<upo3,fig.dim=c(6,54/16),out.width="60%",results="hide">>=
+  x |>
+    plot(points=TRUE,prune=TRUE,obscure=TRUE,palette="#B3B3B3FF")+
+    geom_vline(xintercept=10,linewidth=0.2,color="black")+
+    labs(x="time")
+  @
+
+  An obscured genealogy is specified by $(\T,\Z)$.
+
+  \note[item]{Erasing the color (lineage-specific history of deme occupancy) gives the \emph{obscured genealogy}.}
+  \note[item]{This is comparable to data.}
+\end{frame}
+
+\begin{frame}{Binomial ratio}
+  For $n,r,\ell,s\in{\Zp^\Demes}$, define the \emph{binomial ratio}
+  \begin{equation*}
+    \BinRatio{n}{\ell}{r}{s}\colonequals
+    \begin{cases}
+      \displaystyle\prod_{i\in\Demes}{\frac{\tbinom{n_i-\ell_i}{r_i-s_i}}{\tbinom{n_i}{r_i}}},
+      & \text{if}\ \forall i\ n_i\ge{\Set{\ell_i,r_i}}\ge{s_i}\ge{0},\\
+      0, & \text{otherwise}.
+    \end{cases}
+    %% \begin{cases}
+    %%   \frac{\displaystyle\prod_{i\in\Demes}{\binom{n_i-\ell_i}{r_i-s_i}}}%
+    %%        {\displaystyle\prod_{i\in\Demes}{\binom{n_i}{r_i}}},
+    %%        & \text{if}\ \forall i\ n_i\ge{\Set{\ell_i,r_i}}\ge{s_i}\ge{0},\\
+    %%        0, & \text{otherwise}.
+    %% \end{cases}
+  \end{equation*}
+  Observe that $\BinRatio{n}{\ell}{r}{s}\in{[0,1]}$.
+  Moreover,
+  \begin{equation*}
+    \sum_{s\in\Zp^{\Demes}}\BinRatio{n}{\ell}{r}{s}\binom{\ell}{s}=1.
+  \end{equation*}
+\end{frame}
+
+\section{Theorems}
+
+\subsection{Pruned genealogies}
+
+\begin{frame}{Theorem: likelihood of a pruned genealogy}
+
+  \begin{onlyenv}<1,4>
+    <<upo2,fig.dim=c(6,54/16),out.width="70%",results="hide">>=
+    @
+  \end{onlyenv}
+
+  \note<1>[item]{We compute the likelihood by integrating over all possible histories of the population process.}
+  \note<1>[item]{This can be accomplished sequentially, in the forward-time direction.}
+  \note<4>[item]{Of course we don't see the deme-histories of the lineages, so we must integrate out the painting as well.}
+
+  \begin{onlyenv}<2>
+    Suppose that $\P=(\Y,\Z)$ is a given pruned genealogy with depth $\T$.
+
+    Define
+    \begin{equation*}
+      \phi_u(x,y,y')\coloneq\BinRatio{n(x)}{\ell(y')}{r^{u}}{s(y,y')}\,Q_{u}(y,y').
+    \end{equation*}
+
+    Here, $Q=1$ if the local structure of $\P$ is compatible with an event of type $u$ at that time;
+    $Q=0$ otherwise.
+  \end{onlyenv}
+
+  \begin{onlyenv}<3>
+    If $w=w(t,x)$ satisfies the initial condition $w(0,x)=p_0(x)$ and the filter equation
+    \begin{equation*}
+      \begin{aligned}
+        \frac{\partial{w}}{\partial{t}}(t,x)=
+        &\sum_u{\int{w(t,x')\,\alpha_u(t,x',x)\,\phi_u(x,\Yt_t,\Y_t)\,\dd{x'}}}
+        -\sum_u{\int{w(t,x)\,\alpha_u(t,x,x')\,\dd{x'}}}\\
+        &\quad+\sum_{e\in\event{\P}}{\delta(t,e)\,\left\{\sum_u{\int{w(t,x')\,\alpha_u(t,x',x)\,\phi_u(x,\Yt_t,\Y_t)\,\dd{x'}}}-w(t,x)\right\}},
+      \end{aligned}
+    \end{equation*}
+    then the likelihood of $\P$ is
+    \begin{equation*}
+      \lik(\P)=\int{w(\T,x)\,\dd{x}}.
+    \end{equation*}
+  \end{onlyenv}
+
+  \note<3>[item]{$\Yt_t$ denotes left-limit.}
+  \note<3>[item]{The sum is over all events in $\P_t$.}
+
+\end{frame}
+
+\subsection{Obscured genealogies}
+
+\begin{frame}
+  {Theorem: likelihood of an obscured genealogy}
+
+  \begin{onlyenv}<1>
+    <<upo3,fig.dim=c(6,54/16),out.width="70%",results="hide">>=
+    @
+  \end{onlyenv}
+
+  \note<1>[item]{We accomplish this by defining a Markov process on the space of paintings.}
+
+  \begin{onlyenv}<2>
+    Let $(\T,\Z)$, be a given obscured genealogy.
+    Then there are probability kernels $\pi$ and $q$ such that if
+    \begin{equation*}
+      \begin{gathered}
+        \beta_u(t,x,x',y,y')=\alpha_u(t,x,x')\,\pi_u(t,x,x',y,y'),\qquad
+        \psi_u(t,x,x',y,y')=\frac{\phi_u(x',y,y')}{\pi_u(t,x,x',y,y')},
+      \end{gathered}
+    \end{equation*}
+    and if $w=w(t,x,y)$ satisfies
+    the initial condition $w(0,x,y)=p_0(x)\,q(x,y)$
+    and the filter equation
+    \begin{equation*}
+      \begin{aligned}
+        \frac{\partial{w}}{\partial{t}}=
+        &\sum_{uy'}{\int{w(t,x',y')\,\beta_u(t,x',x,y',y)\,\psi_u(t,x',x,y',y)\,\dd{x'}}}
+        -\sum_{uy'}{\int{w(t,x,y)\,\beta_u(t,x,x',y,y')\,\dd{x'}}}\\
+        &+\sum_{e\in\event{\Z}}{\delta(t,e)\,\left\{\sum_{uy'}{\int{w(t,x',y')\,\beta_u(t,x',x,y,y')\,\psi_u(t,x',x,y',y)\,\dd{x'}}}-w(t,x,y)\right\}},
+      \end{aligned}
+    \end{equation*}
+  \end{onlyenv}
+
+  \note<2>[item]{Here, $y$ ranges over the space of colorings of $\Z$.}
+
+  \begin{onlyenv}<3>
+    then the likelihood of $\Z$ is
+    \begin{equation*}
+      \lik(\Z)=\sum_y{\int{w(T,x,y)\,\dd{x}}}.
+    \end{equation*}
+  \end{onlyenv}
+
+  \begin{onlyenv}<3>
+    <<upo3,fig.dim=c(6,54/16),out.width="50%",results="hide">>=
+    @
+  \end{onlyenv}
+
+\end{frame}
+
+\section{Examples}
+
+\begin{frame}{Linear birth-death model}
+
+  \note[item]{$\lambda=1.5$, $\mu=0.8$, $\psi=1$, $n_0=1$}
+
+  <<lbdp1>>=
+  bake(
+    file="lbdp1.rds",
+    seed=728604304L,
+    {
+      library(phylopomp)
+      runLBDP(lambda=1.5,mu=0.8,psi=1,time=5,n0=1)
+    }
+  ) -> x
+
+  bake(
+    file="lbdp2.rds",
+    seed=2119434716L,
+    {
+      expand_grid(
+        rep=1:16,
+        lambda=seq(0.7,2.5,by=0.1),
+        mu=0.8,
+        psi=1,
+        times=5,
+        n0=1,
+        Np=c(1000,10000)
+      ) -> params
+
+      library(iterators)
+      library(doFuture)
+      plan(multicore)
+
+      foreach (
+        p=iter(params,"row"),
+        .inorder=FALSE,
+        .combine=bind_rows,
+        .options.future=list(seed=TRUE)
+      ) %dofuture% {
+        library(pomp)
+        library(phylopomp)
+        p |> with({
+          x |>
+            lbdp_exact(lambda=lambda,mu=mu,psi=psi)
+        }) -> ll1
+        p |> with({
+          x |>
+            lbdp_pomp(lambda=lambda,mu=mu,psi=psi,n0=n0) |>
+            pfilter(Np=Np) |>
+            logLik()
+        }) -> ll2
+        bind_cols(p,exact=ll1,pf=ll2)
+      }
+    }
+  ) -> params
+  @
+
+  \begin{center}
+    <<lbdp1_plot,fig.dim=c(8,2.8),out.width="100%">>=
+    plot_grid(
+      A=x |> plot(points=TRUE),
+      B=params |>
+        pivot_longer(c(exact,pf)) |>
+        unite(name,name,Np) |>
+        mutate(
+          name=if_else(grepl("exact",name),"exact",name),
+          name=gsub("pf_","",name)
+        ) |>
+        group_by(lambda,mu,psi,times,n0,name) |>
+        reframe(
+          type=c("logLik","logLik_se"),
+          value=logmeanexp(value,se=TRUE)
+        ) |>
+        ungroup() |>
+        pivot_wider(names_from=type) |>
+        mutate(
+          y=logLik,
+          ymax=logLik+2*logLik_se,
+          ymin=logLik-2*logLik_se
+        ) |>
+        filter(logLik>max(logLik)-16) |>
+        ggplot(aes(x=lambda,group=name,color=name,
+          y=y,ymin=ymin,ymax=ymax))+
+        geom_errorbar(
+          position="dodge"
+        )+
+        scale_color_manual(
+          labels=c(
+            exact="exact",
+            `1000`="1000 particles",
+            `10000`="10000 particles"
+          ),
+          values=c(
+            exact="black",
+            `1000`="blue",
+            `10000`="red"
+          )
+        )+
+        labs(
+          color=character(0),
+          y="log likelihood",
+          x=expression(lambda)
+        )+
+        theme_classic()+
+        theme(
+          legend.position=c(0.5,0.27)
+        ),
+      labels="AUTO",
+      nrow=1,
+      rel_widths=c(1,1)
+    )
+    @
+  \end{center}
+
+  Uniform sampling.\\
+  Exact likelihoood is available in closed form.
+
+\end{frame}
+
+\begin{frame}{SIRS model}
+
+  \begin{onlyenv}<1-2>
+    \begin{center}
+      \resizebox{0.5\linewidth}{!}{
+        \begin{tikzpicture}[scale=1]
+          \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+          \tikzstyle{ibox}=[draw=darkgreen]
+          \tikzstyle{deme}=[fill=black!20!white]
+          \tikzstyle{label}=[font=\Large]
+          \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+          \tikzstyle{flow}=[draw=black, very thick, >=stealth]
+          \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
+
+          %% SIRS model
+          \coordinate (origin) at (0,0);
+          \node [box] (S) at ($(origin)+(1,-1)$) {$\lab{S}$};
+          \node [box,ibox,deme] (I) at ($(S)+(3,0)$) {$\lab{I}$};
+          \node [box] (R) at ($(I)+(3,0)$) {$\lab{R}$};
+          \coordinate (overR) at ($(R)+(0,1)$);
+          \coordinate (midSI) at ($(S)!0.5!(I)$);
+          \draw [flow,->] (S) -- (I) node[midway,below] {$\frac{\beta\,I}{N}$};
+          \draw [flow,->] (I) -- (R) node[midway,above] {$\gamma$};
+          \draw [flow] (R) -- (overR);
+          \draw [flow] (overR) -- (S |- overR) node[midway,above] {$\omega$};
+          \draw [flow,->] (S |- overR) -- (S);
+          \draw [modulate,->] (I.north west) .. controls ($(I)+(-1,1)$) and ($(midSI)+(0,1)$) .. (midSI);
+        \end{tikzpicture}
+      }
+    \end{center}
+  \end{onlyenv}
+
+  \begin{onlyenv}<1>
+    Between genealogical events:
+    \begin{equation*}
+      \begin{split}
+        \frac{\partial{w}}{\partial{t}} &=
+        \frac{\beta\,(S+1)\,(I-1)}{N}\,\left(1-\frac{\tbinom{\ell}{2}}{\tbinom{I}{2}}\right)\,w(t,S+1,I-1,R)
+        +{\gamma\,(I+1)}\,w(t,S,I+1,R-1)\\
+        &\quad+{\omega\,(R+1)}\,w(t,S-1,I,R+1)
+        -\left(\frac{\beta\,S\,I}{N}+\gamma\,I+\omega\,R+\psi\,I\right)\,w(t,S,I,R).
+      \end{split}
+    \end{equation*}
+  \end{onlyenv}
+
+  \begin{onlyenv}<2>
+    At genealogical events:
+    \begin{equation*}
+      w(t,S,I,R)=
+      \begin{cases}
+        \frac{2\,\beta\,(S+1)}{I\,N}\,\wt(t,S+1,I-1,R), &\text{branch point at $t$},\\[13pt]
+        \psi\,\wt(t,S,I,R), &\text{internal sample at $t$},\\[13pt]
+        \psi\,\left(I-{\ell}\right)\,\wt(t,S,I,R), &\text{terminal sample at $t$}.\\
+      \end{cases}
+    \end{equation*}
+  \end{onlyenv}
+
+  \note<2>[item]{$\wt$ is the left-limit of $w$.}
+
+  <<sirs1>>=
+  bake(
+    file="sirs1.rds",
+    seed=328168304L,
+    {
+      library(phylopomp)
+      runSIRS(
+        Beta=4,gamma=2,psi=1,omega=1,
+        S0=97,I0=3,R0=0,t0=0,time=40
+      )
+    }
+  ) -> x
+
+  bake(
+    file="sirs2.rds",
+    seed=621400057L,
+    {
+      expand_grid(
+        Beta=4,
+        gamma=2,
+        psi=1,
+        omega=seq(0.5,2,by=0.05),
+        S0=97,I0=3,R0=0,
+        t0=0,
+        rep=1:16,
+        Np=5000,
+        ) -> params
+
+      library(iterators)
+      library(doFuture)
+      plan(multicore)
+
+      foreach (
+        p=iter(params,"row"),
+        .inorder=FALSE,
+        .combine=bind_rows,
+        .options.future=list(seed=TRUE)
+      ) %dofuture% {
+        library(pomp)
+        library(phylopomp)
+        p |> with({
+          x |>
+            sirs_pomp(
+              Beta=Beta,gamma=gamma,psi=psi,omega=omega,
+              S0=S0,I0=I0,R0=R0,t0=0
+            ) |>
+            pfilter(Np=Np) |>
+            logLik()
+        }) -> ll
+        bind_cols(p,logLik=ll)
+      } -> params
+    }
+  ) -> params
+  @
+
+  \begin{onlyenv}<3>
+    \begin{center}
+      <<sirs1_plot,dependson="sirs1",fig.dim=c(8,2.8),out.width="100%">>=
+      plot_grid(
+        A=x |> plot(points=FALSE),
+        B=params |>
+          group_by(Beta,gamma,psi,omega,S0,I0,R0,Np) |>
+          reframe(
+            name=c("logLik","logLik_se"),
+            value=logmeanexp(logLik,se=TRUE)
+          ) |>
+          ungroup() |>
+          pivot_wider() |>
+          mutate(
+            y=logLik,
+            ymax=logLik+2*logLik_se,
+            ymin=logLik-2*logLik_se
+          ) |>
+          filter(round(Beta,2)==4) |>
+          filter(logLik>max(logLik)-16) |>
+          ggplot(
+            aes(
+              x=omega,group=Np,
+              y=y,ymin=ymin,ymax=ymax
+            )
+          )+
+          geom_errorbar(
+            position="dodge"
+          )+
+          geom_vline(xintercept=1,color="red")+
+          labs(
+            color=character(0),
+            y="log likelihood",
+            x=expression(omega)
+          )+
+          theme_classic()+
+          theme(
+            legend.position=c(0.5,0.27)
+          ),
+        labels="AUTO",
+        nrow=1,
+        rel_widths=c(1,1)
+      )
+      @
+    \end{center}
+
+    Uniform sampling.\\
+    One deme only.
+  \end{onlyenv}
+
+  \note<3>[item]{
+    \textbf{(A)} A simulated genealogy for $\beta=4$, $\gamma=2$, $\psi=1$, and $\omega=1$.
+    The population is of size $100$, with $3$ infectives at time 0.
+  }
+  \note<3>[item]{
+    \textbf{(B)} Change in the log likelihood as a function of position along a line passing through the true parameter in the $\omega$-direction.
+    The error bars show the estimates obtained using the particle filter (mean ${\pm}2$~s.e.).
+  }
+
+\end{frame}
+
+\begin{frame}{SEIRS model}
+
+  \begin{onlyenv}<1>
+    \begin{center}
+      \resizebox{0.5\linewidth}{!}{
+        \begin{tikzpicture}[scale=1]
+          \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+          \tikzstyle{ibox}=[draw=darkgreen]
+          \tikzstyle{deme}=[fill=black!20!white]
+          \tikzstyle{label}=[font=\Large]
+          \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+          \tikzstyle{flow}=[draw=black, very thick, >=stealth]
+          \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
+
+          %% SEIRS model
+          \coordinate (origin) at (0,0);
+          \node [box] (S) at ($(origin)+(1,-1)$) {$\lab{S}$};
+          \node [box,deme] (E) at ($(S)+(2,0)$) {$\lab{E}$};
+          \node [box,ibox,deme] (I) at ($(E)+(2,0)$) {$\lab{I}$};
+          \node [box] (R) at ($(I)+(2,0)$) {$\lab{R}$};
+          \coordinate (overR) at ($(R)+(0,1)$);
+          \coordinate (midSE) at ($(S)!0.5!(E)$);
+          \draw [flow,->] (S) -- (E) node[midway,below] {$\displaystyle\frac{\beta\,I}{N}$};
+          \draw [flow,->] (E) -- (I) node[midway,above] {$\sigma$};
+          \draw [flow,->] (I) -- (R) node[midway,above] {$\gamma$};
+          \draw [flow] (R) -- (overR);
+          \draw [flow] (overR) -- (S |- overR) node[midway,above] {$\omega$};
+          \draw [flow,->] (S |- overR) -- (S);
+          \draw [modulate,->] (I.north west) .. controls ($(I)+(-1,1)$) and ($(midSE)+(0,1)$) .. (midSE);
+        \end{tikzpicture}
+      }
+    \end{center}
+  \end{onlyenv}
+
+  <<seirs1>>=
+  freeze(
+    seed=751601556L,
+    runSEIR(
+      Beta=4,sigma=1,gamma=1,psi=1,omega=1,
+      S0=200,E0=3,I0=5,R0=100,
+      time=3
+    )
+  ) -> G
+
+  bake(
+    file="seirs1a.rds",
+    seed=831282841L,
+    {
+      library(phylopomp)
+      library(circumstance)
+      library(doFuture)
+      plan(multicore)
+
+      G |>
+        seirs_pomp(
+          Beta=4,sigma=1,gamma=1,psi=1,omega=1,
+          S0=200,E0=3,I0=5,R0=100
+        ) -> po
+
+      seq(0.2,2.5,by=0.1) |>
+        lapply(
+          \(s) {
+            x <- po
+            coef(x,"sigma") <- s
+            x
+          }
+        ) |>
+        concat() |>
+        pfilter(Np=20000,Nrep=10)
+    }
+  ) -> pfs
+  @
+
+  \note<2>[item]{
+    $\beta=4$, $\sigma=1$, $\gamma=1$, $\psi=1$, $\omega=1$,
+    $S_0=200$, $E_0=3$, $I_0=5$, $R_0=100$
+  }
+
+  \begin{onlyenv}<2>
+    \begin{center}
+      <<seirs1_plot,fig.dim=c(8,2.8),out.width="100%">>=
+      left_join(
+        coef(pfs) |> melt() |> pivot_wider(),
+        pfs |> logLik() |> melt(),
+        by=c(".id"="name")
+      ) |>
+        rename(logLik=value) -> res
+      plot_grid(
+        A=G |> plot(points=TRUE),
+        B=res |>
+          filter(is.finite(logLik)) |>
+          ggplot(aes(x=sigma,y=logLik))+
+          geom_point()+
+          geom_smooth()+
+          geom_vline(xintercept=1,color="red")+
+          lims(y=c(max(res$logLik)-10,NA))+
+          labs(
+            color=character(0),
+            y="log likelihood",
+            x=expression(sigma)
+          )+
+          theme_classic(),
+        labels="AUTO",
+        nrow=1,
+        rel_widths=c(1,1)
+      )
+      @
+    \end{center}
+  \end{onlyenv}
+
+\end{frame}
+
+\AtBeginSection[]{}
+
+\section*{Summary and outstanding challenges}
+
+\begin{frame}{Concluding remarks}
+  \begin{itemize}
+  \item
+    The theory \emph{corrects} and \emph{strictly extends} all existing likelihood-based phylodynamic methods \citep[\eg][]{Volz2009a,Rasmussen2011,Stadler2010,Volz2012,Volz2014a,Rasmussen2014a,Vaughan2019}.
+  \item
+    It eliminates the need for large population-size and small sample-fraction assumptions, as well as any dependence on linearization.
+  \item
+    All computations can be carried out forward in time.
+  \item
+    This greatly expands the class of models that can be entertained.
+  \item
+    Great flexibility in sampling model
+  \item
+    Applications in disease ecology and beyond
+  \item
+    The unstructured case can be found in \citet{King2022}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Outstanding challenges}
+  \begin{itemize}
+  \item Choice of importance-sampling kernel
+  \item Borrowing information from future is allowed.
+  \item Phylogenetic uncertainty
+  \item Efficient algorithms
+  \item Reassortment and recombination
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+  \begin{itemize}
+  \item A discretely structured Markov population process uniquely induces a genealogy-valued Markov process.
+  \item The likelihood of an observed genealogy satisfies a nonlinear filtering equation, which can be efficiently computed via Feynman-Ka\c{c} (sequential Monte Carlo) algorithms.
+  \item In principle, these results liberate us to entertain models that more closely match our biological questions, without less hindrance from inference methodology.
+  \end{itemize}
+\end{frame}
+
+\mode<presentation>{
+  \begin{frame}[allowframebreaks=0.8]{References}
+    \bibliography{course}
+  \end{frame}
+}
+\mode<article>{
+  \bibliography{course}
+}
+
+\begin{frame}{License, acknowledgments, and links}
+
+  \begin{itemize}
+  \item
+    The materials build on \link{../acknowledge.html}{previous versions of this course and related courses}.
+
+  \item
+    Licensed under the \link{https://creativecommons.org/licenses/by-nc/4.0/}{Creative Commons Attribution-NonCommercial license}.
+    Please share and remix non-commercially, mentioning its origin.
+    \includegraphics[height=12pt]{../graphics/cc-by-nc}
+
+  \item
+    Produced with R version \Sexpr{getRversion()} and \pkg{pomp} version \Sexpr{packageVersion("pomp")}.
+
+  \item
+    Compiled on \today.
+
+  \end{itemize}
+
+  \link{index.html}{Back to Lesson}
+
+  \link{main.R}{\Rlanguage codes for this lesson}
+\end{frame}
+
+\end{document}

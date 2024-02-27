@@ -1,0 +1,32 @@
+%% \documentclass[crop,tikz]{standalone}
+%% \input{defs}
+%% \begin{document}
+%% \usetikzlibrary{arrows}
+\begin{tikzpicture}[scale=1.4]
+  \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+  \tikzstyle{det}=[color=black, thick, >=stealth]
+  \tikzstyle{stoch}=[color=black, dashed, thick, >=stealth]
+  \node (O) at (0,0) {$\Master_t$};
+  \node (X) at (180:2) {$\X_t$};
+  \node (H) at (216:2) {$\Hist_t$};
+  \node (I) at (252:2) {$\Inv_t$};
+  \node (G) at (288:2) {$\Gen_t$};
+  \node (V) at (324:2) {$\Prune_t$};
+  \node (W) at (360:2) {$\Vis_t$};
+  \draw [det,->] (O) -- (X);
+  \draw [det,->] (O) -- (H);
+  \draw [det,->] (H) -- (X);
+  \draw [det,->] (O) -- (I);
+  \draw [det,->] (O) -- (G);
+  \draw [det,->] (O) -- (V);
+  \draw [det,->] (O) -- (W);
+  \draw [det,->] (V) -- (W);
+  \draw [det,->] (G) -- (I) node[midway,below,sloped] {$\ext$};
+  \draw [det,->] (G) -- (V) node[midway,below,sloped] {$\prune$};
+  \draw [det,->] (V) -- (W) node[midway,below,sloped] {$\obs$};
+  \draw [stoch,->] (H) -- (I);
+  \draw [stoch,->] (H) -- (G);
+  \draw [stoch,->] (H) -- (V);
+  \draw [stoch,->] (H) -- (W);
+\end{tikzpicture}
+%% \end{document}

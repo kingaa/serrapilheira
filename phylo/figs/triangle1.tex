@@ -1,0 +1,63 @@
+%%\documentclass[crop,tikz]{standalone}
+%%\begin{document}
+%%\usetikzlibrary{arrows,math,calc}
+\begin{tikzpicture}[scale=3]
+  \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+  \tikzstyle{solid}=[color=black, thin, >=stealth]
+  \tikzstyle{dots}=[color=black, thin, >=stealth]
+  \tikzmath{
+    real \xsp, \ysp;
+    int \n, \l, \s;
+    coordinate \orig, \loc;
+    \n = 4;
+    \orig = (0,0);
+    \xsp = 1;
+    \ysp = 0.6;
+    for \l in {0,...,\n} {
+      for \s in {0,...,\l} {
+        \loc = (\orig)+(\l*\xsp,-\s*\ysp);
+        if \l==0 then {
+          if \s==0 then {
+            {\node (P\l\s) at (\loc) {$(\ell=\l,s=\s)$}; };
+          } else {
+            {\node (P\l\s) at (\loc) {$(\l,\s)$}; };
+          };
+        } else {
+          {\node (P\l\s) at (\loc) {$(\l,\s)$}; };
+        };
+      };
+    };
+    for \l in {0,...,\n-1} {
+      for \s in {0,...,\l} {
+        int \m, \t, \q;
+        \m = \l+1;
+        \t = \s+1;
+        \q = \l-\s;
+        if \l==0 then {
+          if \q==0 then {
+            {\draw[solid,->] (P\l\s) -- (P\m\s) node[midway,above,sloped] {$\frac{n-r}{n}$};};
+          } else {
+            {\draw[solid,->] (P\l\s) -- (P\m\s) node[midway,above,sloped] {$\frac{n-r-\q}{n-\l}$};};
+          };
+          if \s==0 then {
+            {\draw[solid,->] (P\l\s) -- (P\m\t) node[midway,above,sloped] {$\frac{r}{n}$};};
+          } else {
+            {\draw[solid,->] (P\l\s) -- (P\m\t) node[midway,above,sloped] {$\frac{r-\s}{n}$};};
+          };
+        } else {
+          if \q==0 then {
+            {\draw[solid,->] (P\l\s) -- (P\m\s) node[midway,above,sloped] {$\frac{n-r}{n-\l}$};};
+          } else {
+            {\draw[solid,->] (P\l\s) -- (P\m\s) node[midway,above,sloped] {$\frac{n-r-\q}{n-\l}$};};
+          };
+          if \s==0 then {
+            {\draw[solid,->] (P\l\s) -- (P\m\t) node[midway,above,sloped] {$\frac{r}{n-\l}$};};
+          } else {
+            {\draw[solid,->] (P\l\s) -- (P\m\t) node[midway,above,sloped] {$\frac{r-\s}{n-\l}$};};
+          };
+        };
+      };
+    };
+  }
+\end{tikzpicture}
+%%\end{document}

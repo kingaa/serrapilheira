@@ -1,0 +1,121 @@
+\begin{center}
+  \resizebox{0.9\linewidth}{!}{
+    \begin{tikzpicture}[scale=1]
+      \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+      \tikzstyle{ibox}=[draw=darkgreen]
+      \tikzstyle{deme}=[fill=black!20!white]
+      \tikzstyle{label}=[font=\Large]
+      \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+      \tikzstyle{flow}=[draw=black, very thick, >=stealth]
+      \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
+
+      %% SEIRS model
+      \coordinate (origin) at (0,0);
+      \node[label] (lab) at (origin) {\textbf{A}};
+      \node [box] (S) at ($(origin)+(1,-1)$) {$\lab{S}$};
+      \node [box,deme] (E) at ($(S)+(2,0)$) {$\lab{E}$};
+      \node [box,ibox,deme] (I) at ($(E)+(2,0)$) {$\lab{I}$};
+      \node [box] (R) at ($(I)+(2,0)$) {$\lab{R}$};
+      \coordinate (overR) at ($(R)+(0,1)$);
+      \coordinate (midSE) at ($(S)!0.5!(E)$);
+      \draw [flow,->] (S) -- (E);
+      \draw [flow,->] (E) -- (I);
+      \draw [flow,->] (I) -- (R);
+      \draw [flow,->] (R) -- (overR) -- (S |- overR) -- (S);
+      \draw [modulate,->] (I.north west) .. controls ($(I)+(-1,1)$) and ($(midSE)+(0,1)$) .. (midSE);
+      \node[font=\normalsize] (demes) at ($(E)!0.5!(I)+(0,-1)$) {$\Demes=\{\lab{E},\lab{I}\}$};
+
+      %% SIIR (two-strain) model
+      \coordinate (origin) at (0,-3);
+      \node[label] (lab) at (origin) {\textbf{B}};
+      \node [box] (S) at ($(origin)+(1,-2)$) {$\lab{S}$};
+      \node [box] (R1) at ($(S)+(6,1)$) {$\lab{R}_1$};
+      \node [box] (R2) at ($(S)+(6,-1)$) {$\lab{R}_2$};
+      \coordinate (overR) at ($(R1)+(0,1)$);
+      \coordinate (underR) at ($(R2)-(0,1)$);
+      \node [box,deme] (E1) at ($(S)+(2,1)$) {$\lab{E}_1$};
+      \node [box,deme] (E2) at ($(S)+(2,-1)$) {$\lab{E}_2$};
+      \node [box,ibox,deme] (I1) at ($(E1)+(2,0)$) {$\lab{I}_1$};
+      \node [box,ibox,deme] (I2) at ($(E2)+(2,0)$) {$\lab{I}_2$};
+      \draw [flow,->] (S) -- (E1);
+      \draw [flow,->] (E1) -- (I1);
+      \draw [flow,->] (I1) -- (R1);
+      \draw [flow,->] (S) -- (E2);
+      \draw [flow,->] (E2) -- (I2);
+      \draw [flow,->] (I2) -- (R2);
+      \draw [flow,->] (R1) -- (overR) -- (S |- overR) -- (S);
+      \draw [flow,->] (R2) -- (underR) -- (S |- underR) -- (S);
+      \coordinate (midSE1) at ($(S)!0.5!(E1)$);
+      \coordinate (midSE2) at ($(S)!0.5!(E2)$);
+      \draw [modulate,->] (I1.north west) .. controls ($(I1)+(-1,1)$) and ($(midSE1)+(0,1.8)$) .. (midSE1);
+      \draw [modulate,->] (I2.south west) .. controls ($(I2)+(-1,-1)$) and ($(midSE2)+(0,-1.8)$) .. (midSE2);
+      \node[font=\normalsize] (demes) at ($(E2)!0.5!(I2)+(0,-2)$) {$\Demes=\{\lab{E}_1,\lab{E}_2,\lab{I}_1,\lab{I}_2\}$};
+
+      %% COVID model
+      \coordinate (origin) at (9,0);
+      \node[label] (lab) at (origin) {\textbf{C}};
+      \node [box] (S) at ($(origin)+(1,-2)$) {$\lab{S}$};
+      \node [box] (R) at ($(S)+(7,1)$) {$\lab{R}$};
+      \coordinate (overR) at ($(R)+(0,1)$);
+      \node [box,deme] (E) at ($(S)+(2,0)$) {$\lab{E}$};
+      \node [box,ibox,deme] (Ia) at ($(E)+(2,1)$) {$\lab{I_A}$};
+      \node [box,ibox,deme] (Is) at ($(E)+(2,-1)$) {$\lab{I_S}$};
+      \node [box] (H) at ($(Is)+(2,0)$) {$\lab{H}$};
+      \node [box] (D) at ($(H)+(2,0)$) {$\lab{D}$};
+      \draw [flow,->] (S) -- (E);
+      \draw [flow,->] (E) -- (Ia.west);
+      \draw [flow,->] (E) -- (Is.west);
+      \draw [flow,->] (Ia) -- (R);
+      \draw [flow,->] (Is) -- (H);
+      \draw [flow,->] (H) -- (R);
+      \draw [flow,->] (Is) -- (R);
+      \draw [flow,->] (H) -- (D);
+      \draw [flow,->] (R) -- (overR) -- (S |- overR) -- (S);
+      \coordinate (midSE) at ($(S)!0.5!(E)$);
+      \draw [modulate,->] (Ia.north west) .. controls ($(Ia.north west)+(165:1)$) and ($(midSE)+(0,2)$) .. (midSE);
+      \draw [modulate,->] (Is.south west) .. controls ($(Is.south west)+(195:1)$) and ($(midSE)+(0,-2)$) .. (midSE);
+      \node[font=\normalsize] (demes) at ($(Is)+(0,-1)$) {$\Demes=\{\lab{E},\lab{I_A},\lab{I_S}\}$};
+
+      %% SI2R (super-spreader) model
+      \coordinate (origin) at (9,-5);
+      \node[label] (lab) at (origin) {\textbf{D}};
+      \node [box] (S) at ($(origin)+(2,-1)$) {$\lab{S}$};
+      \node [box,deme] (E) at ($(S)+(2,0)$) {$\lab{E}$};
+      \node [box,ibox,deme] (Il) at ($(E)+(2,0)$) {$\lab{I_L}$};
+      \node [box,ibox,deme] (Ih) at ($(Il)+(0,-2)$) {$\lab{I_H}$};
+      \node [box] (R) at ($(Il)+(2,0)$) {$\lab{R}$};
+      \coordinate (overR) at ($(R)+(0,1)$);
+      \coordinate (midSE) at ($(S)!0.5!(E)$);
+      \draw [flow,->] (S) -- (E);
+      \draw [flow,->] (E) -- (Il);
+      \draw [flow,<->] (Il) -- (Ih);
+      \draw [flow,->] (Il) -- (R);
+      \draw [flow,->] (Ih.east) -- (R |- Ih.east) -- (R);
+      \draw [flow,->] (R) -- (overR) -- (S |- overR) -- (S);
+      \draw [modulate,->] (Il.north west) .. controls ($(Il.north west)+(135:0.8)$) and ($(midSE)+(0,1)$) .. (midSE);
+      \draw [modulate,->] (Ih.west) .. controls ($(Ih.west)+(180:0.8)$) and ($(midSE)+(0,-1)$) .. (midSE);
+      \node[font=\normalsize] (demes) at (midSE |- Ih) {$\Demes=\{\lab{E},\lab{I_L},\lab{I_H}\}$};
+    \end{tikzpicture}
+  }
+\end{center}
+\caption{
+  Examples of discretely-structured population models.
+  Demes are shaded.
+  Compartments containing infectious hosts are outlined in green.
+  Curved green lines connect transmission rates with the compartments whose occupancies control their modulation;
+  each such connection gives rise to a nonlinearity in the model.
+  \textbf{(A)} An SEIRS model.
+  Susceptible individuals ($\lab{S}$), once infected, enter a transient incubation phase ($\lab{E}$) before they become infectious ($\lab{I}$).
+  Upon recovery ($\lab{R}$), individuals experience immunity from reinfection.
+  If this immunity wanes, they re-enter the susceptible compartment.
+  Pathogen lineages are to be found in hosts within the $\lab{E}$ and $\lab{I}$ compartments only.
+  Accordingly, there are two demes ($\Demes=\Set{\lab{E},\lab{I}}$).
+  If there is exactly one lineage per host, then the occupancy, $n(\Xr_t)=(n_{\lab{E}}(\Xr_t),n_{\lab{I}}(\Xr_t))$, is the integer 2-vector giving the numbers of hosts in the respective compartments.
+  \textbf{(B)} In this four-deme model, two distinct pathogen strains compete for susceptibles.
+  \textbf{(C)} A three-deme model for SARS-CoV-2 infection.
+  After an incubation period, individuals may develop asymptomatic infection ($\lab{I_A}$).
+  If they do not recover, symptomatically infected individuals ($\lab{I_S}$) can progress to hospitalization ($\lab{H}$) and death ($\lab{D}$).
+  \textbf{(D)} A three-deme model with heterogeneity in transmission behavior.
+  Contagious individuals move randomly between low-transmission ($\lab{I_L}$) and high-transmission ($\lab{I_H}$) behaviors.
+  \label{fig:example_models}
+}

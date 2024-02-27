@@ -11,8 +11,8 @@ output:
 
 ----------------------
 
-| &nbsp;         | &nbsp;                |
-|:---------------|:---------------------:|
-| Lecture slides | [HTML](pomptalk.html) |
+| &nbsp;         | &nbsp;                                  |
+|:---------------|:---------------------------------------:|
+| Lecture slides | [HTML](pomptalk.html){target="_blank"} |
 
 	

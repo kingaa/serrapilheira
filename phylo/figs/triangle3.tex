@@ -1,0 +1,60 @@
+\documentclass[crop,tikz]{standalone}
+\begin{document}
+\usetikzlibrary{arrows}
+\begin{tikzpicture}[scale=3.2]
+  \pgfmathsetmacro{\vh}{-0.75}
+  \pgfmathsetmacro{\os}{0.5}
+  \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+  \tikzstyle{solid}=[color=black, thin, >=stealth]
+  \tikzstyle{dots}=[color=black, thin, dotted, >=stealth]
+  \node (P00) at (0,0*\vh) {$(\ell=0,s=0)$};
+  \node (P10) at (1,0*\vh) {$(1,0)$};
+  \node (P11) at (1,1*\vh) {$(1,1)$};
+  \node (P20) at (2,0*\vh) {$(2,0)$};
+  \node (P21) at (2,1*\vh) {$(2,1)$};
+  \node (P22) at (2,2*\vh) {$(2,2)$};
+  \node (P30) at (3,0*\vh) {$(3,0)$};
+  \node (P31) at (3,1*\vh) {$(3,1)$};
+  \node (P32) at (3,2*\vh) {$(3,2)$};
+  \node (P33) at (3,3*\vh) {$(3,3)$};
+  \node (P40) at (4,0*\vh) {};
+  \node (P41) at (4,1*\vh) {};
+  \node (P42) at (4,2*\vh) {};
+  \node (P43) at (4,3*\vh) {};
+  \node (P44) at (4,4*\vh) {};
+  \node (Plm2sm2) at (4+\os,2*\vh) {};
+  \node (Plm2sm1) at (4+\os,3*\vh) {};
+  \node (Plm2sm0) at (4+\os,4*\vh) {};
+  \node (Plm1sm1) at (5+\os,3*\vh) {$(\ell-1,s-1)$};
+  \node (Plm1sm0) at (5+\os,4*\vh) {$(\ell-1,s)$};
+  \node (Pls)   at (6+\os,4*\vh) {$(\ell,s)$};
+  \draw [solid,->] (P00) -- (P10) node[midway,above,sloped] {$\frac{n-r}{n}$};
+  \draw [solid,->] (P00) -- (P11) node[midway,above,sloped] {$\frac{r}{n}$};
+  \draw [solid,->] (P10) -- (P20) node[midway,above,sloped] {$\frac{n-r-1}{n-1}$};
+  \draw [solid,->] (P10) -- (P21) node[midway,above,sloped] {$\frac{r}{n-1}$};
+  \draw [solid,->] (P11) -- (P21) node[midway,above,sloped] {$\frac{n-r}{n-1}$};
+  \draw [solid,->] (P11) -- (P22) node[midway,above,sloped] {$\frac{r-1}{n-1}$};
+  \draw [solid,->] (P20) -- (P30) node[midway,above,sloped] {$\frac{n-r-2}{n-2}$};
+  \draw [solid,->] (P20) -- (P31) node[midway,above,sloped] {$\frac{r}{n-2}$};
+  \draw [solid,->] (P21) -- (P31) node[midway,above,sloped] {$\frac{n-r-1}{n-2}$};
+  \draw [solid,->] (P21) -- (P32) node[midway,above,sloped] {$\frac{r-1}{n-2}$};
+  \draw [solid,->] (P22) -- (P32) node[midway,above,sloped] {$\frac{n-r}{n-2}$};
+  \draw [dots,->]  (P22) -- (P33) node[midway,above,sloped] {$\frac{r-2}{n-2}$};
+  \draw [dots,->]  (P30) -- (P40) {};
+  \draw [dots,->]  (P30) -- (P41) {};
+  \draw [dots,->]  (P31) -- (P41) {};
+  \draw [dots,->]  (P31) -- (P42) {};
+  \draw [dots,->]  (P32) -- (P42) {};
+  \draw [dots,->]  (P32) -- (P43) {};
+  \draw [dots,->]  (P33) -- (P43) {};
+  \draw [dots,->]  (P33) -- (P44) {};
+  \draw [dots,->]  (Plm2sm2) -- (Plm1sm1) {};
+  \draw [dots,->]  (Plm2sm1) -- (Plm1sm1) {};
+  \draw [dots,->]  (Plm2sm1) -- (Plm1sm1) {};
+  \draw [dots,->]  (Plm2sm1) -- (Plm1sm0) {};
+  \draw [dots,->]  (Plm2sm1) -- (Plm1sm0) {};
+  \draw [dots,->]  (Plm2sm0) -- (Plm1sm0) {};
+  \draw [solid,->] (Plm1sm1) -- (Pls) node[midway,above,sloped] {$\frac{r-s+1}{n-\ell+1}$};
+  \draw [solid,->] (Plm1sm0) -- (Pls) node[near start,above,sloped] {$\frac{n-r-\ell+s}{n-\ell+1}$};
+\end{tikzpicture}
+\end{document}
