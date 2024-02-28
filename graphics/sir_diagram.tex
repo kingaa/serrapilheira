@@ -34,7 +34,7 @@
   \coordinate (sinkR) at ($(R)+(1,1)$);
   \draw [obs,->] (midIR) .. controls ($(midIR)+(0,-1)$) and ($(C)+(-1,0)$) .. (C);
   \draw [flow,->] (S) -- (I) node[midway,below,sloped] {$\mu^{}_{SI}$};
-  \draw [flow,->] (I) -- (R) node[midway,above,sloped,text=darkgreen] {$\mu^{}_{IR}$};
+  \draw [flow,->] (I) -- (R) node[midway,above,sloped] {$\mu^{}_{IR}$};
   \draw [flow,->] (source) -- (S) node[midway,above,sloped] {$\mu^{}_{BS}$};
   \draw [flow,->] (S.north east) -- (sinkS) node[midway,above,sloped] {$\mu^{}_{SD}$};
   \draw [flow,->] (I.north east) -- (sinkI) node[midway,above,sloped] {$\mu^{}_{ID}$};

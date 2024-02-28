@@ -1,0 +1,10 @@
+.help {
+    text-align: left;
+    border-width: 2px;
+    width: 90%;
+    height: 50ex;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
