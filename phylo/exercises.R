@@ -38,7 +38,7 @@ for (i in seq_along(times)) {
 
 source("https://kingaa.github.io/serrapilheira/phylo/animator.R")
 
-animator(plots=pl,gif_file="moran1.gif",webm=TRUE,framerate=15)
+animator(plots=pl,gif_file="moran1.gif",webm=TRUE,mp4=TRUE,framerate=15)
 
 if (rstudioapi::isAvailable()) {
   file.show("moran1.gif")

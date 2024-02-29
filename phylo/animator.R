@@ -31,7 +31,7 @@ animator <- function (
       plot=pl[[i]],
       filename=png_files[i],
       device="png",dpi=100,
-      height=3,width=5,units="in"
+      height=300,width=500,units="px"
     )
     if (progress) setTxtProgressBar(pb,i)
   }
