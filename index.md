@@ -27,13 +27,12 @@ hr {
 
 ----------------------
 
-## Module description
+## Mini-course description
 
-This module introduces statistical inference techniques and computational methods for dynamic models of epidemiological systems.
-The course will explore deterministic and stochastic formulations of epidemiological dynamics and develop inference methods appropriate for a range of models.
-Special emphasis will be on exact and approximate likelihood as the key elements in parameter estimation, hypothesis testing, and model selection. Specifically, the course will cover sequential Monte Carlo and synthetic likelihood techniques.
-Students will learn to implement these in **R** to carry out maximum likelihood and Bayesian inference. Knowledge of the material in Module 1 is assumed.
-Students new to **R** should complete a [tutorial](https://kingaa.github.io/R_Tutorial/) before the module.
+This mini-course introduces statistical inference techniques and computational methods for dynamic models of epidemiological systems.
+The course explores deterministic and stochastic formulations of epidemiological dynamics and develop inference methods appropriate for a range of models.
+Special emphasis is placed on exact and approximate likelihood as the key elements in parameter estimation, hypothesis testing, and model selection.
+Students new to **R** should complete a [tutorial](https://kingaa.github.io/R_Tutorial/).
 
 ----------------------
 
@@ -44,7 +43,6 @@ Students new to **R** should complete a [tutorial](https://kingaa.github.io/R_Tu
 1. To teach efficient approaches for performing scientific inference using POMP models.
 1. To familiarize students with the **pomp** package.
 1. To give students opportunities to work with such inference methods.
-1. To provide documented examples for student re-use.
 
 ----------------------
 

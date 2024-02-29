@@ -10,6 +10,7 @@ library(tidyverse)
 library(phylopomp)
 library(gifski)
 theme_set(theme_bw())
+dir.create("figs")
 
 
 
@@ -37,110 +38,101 @@ for (i in seq_along(times)) {
 }
 
 source("https://kingaa.github.io/serrapilheira/phylo/animator.R")
+animator(plots=pl,gif_file="figs/moran1.gif",webm=TRUE,mp4=TRUE)
 
-animator(plots=pl,gif_file="moran1.gif",webm=TRUE,mp4=TRUE,framerate=15)
 
-if (rstudioapi::isAvailable()) {
-  file.show("moran1.gif")
-}
 
-## \begin{tikzpicture}[scale=1]
-##   \usetikzlibrary{arrows.meta,positioning,calc}
-##   \definecolor{royalblue}{rgb}{0.263,0.431,0.933}
-## 
-##   \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
-##   \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
-##   \tikzstyle{flow}=[draw=black, very thick, >=stealth]
-##   \tikzstyle{obs}=[draw=royalblue, thick, >=Circle]
-## 
-##   \coordinate (origin) at (0,0);
-##   \node [box] (N) at (origin) {$N$};
-## 
-##   \draw [flow,->] (N.south east) -- ($(N)+(1,-1)$) node[midway,above,sloped] {$\mu$};
-##   \draw [flow,->] (N.north) .. controls ($(N)+(90:2)$) and ($(N.west)+(180:2)$) .. (N.west) node[midway,above,sloped] {$\lambda$};
-##   \draw [obs,->] (N.east) -- ($(N)+(0:2)$) node[midway,above,sloped] {$\psi$};
-## 
-## \end{tikzpicture}
+bake(
+  seed=239863857,
+  file="lbdp1.rds",
+  {
+    simulate("LBDP",t0=0,time=0,n=1,lambda=1.8,mu=1,psi=0) -> bd
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      bd |> simulate("LBDP",time=times[i]) -> bd
+      bd |>
+        plot(prune=FALSE,points=TRUE)+
+        expand_limits(x=10) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/lbdp1.gif",webm=TRUE,mp4=TRUE)
+  }
+)
 
-## \begin{tikzpicture}[scale=1.3]
-##   \usetikzlibrary{arrows.meta,positioning,calc}
-##   \definecolor{darkgreen}{rgb}{0,0.392,0}
-##   \definecolor{royalblue}{rgb}{0.263,0.431,0.933}
-## 
-##   \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
-##   \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
-##   \tikzstyle{flow}=[draw=black, very thick, >=stealth]
-##   \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
-##   \tikzstyle{obs}=[draw=royalblue, thick, >=Circle]
-## 
-##   \coordinate (origin) at (0,0);
-##   \node [box] (S) at ($(origin)+(1,-1)$) {$S$};
-##   \node [box] (I) at ($(S)+(2,0)$) {$I$};
-##   \node [box] (R) at ($(I)+(2,0)$) {$R$};
-##   \coordinate (midSI) at ($(S)!0.5!(I)$);
-##   \coordinate (midIR) at ($(I)!0.5!(R)$);
-##   \node (C) at ($(midIR)+(0,-1)$) {$C$};
-##   \draw [flow,->] (S) -- (I) node[midway,below,sloped] {$\beta\,I/N$};
-##   \draw [flow,->] (I) -- (R) node[midway,above,sloped] {$\gamma$};
-##   \draw [obs,->] (I.south) .. controls ($(I)+(0,-1)$) and ($(C)+(-1,0)$) .. (C)  node[midway,above,sloped] {$\psi$};
-##   \draw [modulate,->] (I.north west) .. controls ($(I)+(-0.8,0.8)$) and ($(midSI)+(0,0.5)$) .. (midSI);
-## 
-## \end{tikzpicture}
+bake(
+  seed=1282680647,
+  file="lbdp2.rds",
+  {
+    simulate("LBDP",t0=0,time=0,n=1,lambda=1.4,mu=1,psi=0.5) -> bd
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      bd |> simulate("LBDP",time=times[i]) -> bd
+      bd |>
+        plot(prune=FALSE,points=TRUE)+
+        expand_limits(x=10) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/lbdp2.gif",webm=TRUE,mp4=TRUE)
+  }
+)
 
-## \begin{tikzpicture}[scale=1.3]
-##   \usetikzlibrary{arrows.meta,positioning,calc}
-##   \definecolor{darkgreen}{rgb}{0,0.392,0}
-##   \definecolor{royalblue}{rgb}{0.263,0.431,0.933}
-## 
-##   \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
-##   \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
-##   \tikzstyle{flow}=[draw=black, very thick, >=stealth]
-##   \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
-##   \tikzstyle{obs}=[draw=royalblue, thick, >=Circle]
-## 
-##   \coordinate (origin) at (0,0);
-##   \node [box] (S) at ($(origin)+(1,-1)$) {$S$};
-##   \node [box] (I) at ($(S)+(2,0)$) {$I$};
-##   \node [box] (R) at ($(I)+(2,0)$) {$R$};
-##   \coordinate (overR) at ($(R)+(0,1)$);
-##   \coordinate (overS) at ($(S)+(0,1)$);
-##   \coordinate (midSI) at ($(S)!0.5!(I)$);
-##   \coordinate (midIR) at ($(I)!0.5!(R)$);
-##   \node (C) at ($(midIR)+(0,-1)$) {$C$};
-##   \draw [flow,->] (S) -- (I) node[midway,below,sloped] {$\beta\,I/N$};
-##   \draw [flow,->] (I) -- (R) node[midway,above,sloped] {$\gamma$};
-##   \draw [flow,->] (R) -- (overR) -- (overS)  node[midway,above,sloped] {$\omega$} -- (S);
-##   \draw [obs,->] (I.south) .. controls ($(I)+(0,-1)$) and ($(C)+(-1,0)$) .. (C)  node[midway,above,sloped] {$\psi$};
-##   \draw [modulate,->] (I.north west) .. controls ($(I)+(-0.8,0.8)$) and ($(midSI)+(0,0.5)$) .. (midSI);
-## 
-## \end{tikzpicture}
+bake(
+  seed=1282680647,
+  file="lbdp3.rds",
+  {
+    simulate("LBDP",t0=0,time=0,n=1,lambda=1.4,mu=1,psi=0.5) -> bd
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      bd |> simulate("LBDP",time=times[i]) -> bd
+      bd |>
+        plot(prune=TRUE,points=TRUE)+
+        expand_limits(x=10) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/lbdp3.gif",webm=TRUE,mp4=TRUE)
+  }
+)
 
-## \begin{tikzpicture}[scale=1.3]
-##   \usetikzlibrary{arrows.meta,positioning,calc}
-##   \definecolor{darkgreen}{rgb}{0,0.392,0}
-##   \definecolor{royalblue}{rgb}{0.263,0.431,0.933}
-## 
-##   \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
-##   \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
-##   \tikzstyle{flow}=[draw=black, very thick, >=stealth]
-##   \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
-##   \tikzstyle{obs}=[draw=royalblue, thick, >=Circle]
-## 
-##   \coordinate (origin) at (0,0);
-##   \node [box] (S) at ($(origin)+(1,-1)$) {$S$};
-##   \node [box] (E) at ($(S)+(2,0)$) {$E$};
-##   \node [box] (I) at ($(E)+(2,0)$) {$I$};
-##   \node [box] (R) at ($(I)+(2,0)$) {$R$};
-##   \coordinate (overR) at ($(R)+(0,1)$);
-##   \coordinate (overS) at ($(S)+(0,1)$);
-##   \coordinate (midSE) at ($(S)!0.5!(E)$);
-##   \coordinate (midIR) at ($(I)!0.5!(R)$);
-##   \node (C) at ($(midIR)+(0,-1)$) {$C$};
-##   \draw [flow,->] (S) -- (E) node[midway,below,sloped] {$\beta\,I/N$};
-##   \draw [flow,->] (E) -- (I) node[midway,above,sloped] {$\sigma$};
-##   \draw [flow,->] (I) -- (R) node[midway,above,sloped] {$\gamma$};
-##   \draw [flow,->] (R) -- (overR) -- (overS)  node[midway,above,sloped] {$\omega$} -- (S);
-##   \draw [obs,->] (I.south) .. controls ($(I)+(0,-1)$) and ($(C)+(-1,0)$) .. (C)  node[midway,above,sloped] {$\psi$};
-##   \draw [modulate,->] (I.north west) .. controls ($(I)+(-0.8,0.8)$) and ($(midSE)+(0,0.8)$) .. (midSE);
-## 
-## \end{tikzpicture}
+
+
+bake(
+  seed=1282680647,
+  file="sir1.rds",
+  {
+    simulate(
+      "SIR",t0=0,time=0,
+      S0=200,I0=3,R0=0,
+      Beta=2,gamma=1,psi=0
+    ) -> sir
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      sir |> simulate("SIR",time=times[i]) -> sir
+      sir |>
+        plot(prune=FALSE,points=TRUE)+
+        expand_limits(x=10) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/sir1.gif",webm=TRUE,mp4=TRUE)
+  }
+)
+
+bake(
+  seed=1282680647,
+  file="sir2.rds",
+  {
+    simulate(
+      "SIR",t0=0,time=0,
+      S0=200,I0=3,R0=0,
+      Beta=2,gamma=1,psi=0.2
+    ) -> sir
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      sir |> simulate("SIR",time=times[i]) -> sir
+      sir |>
+        plot(prune=FALSE,points=TRUE)+
+        expand_limits(x=10) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/sir2.gif",webm=TRUE,mp4=TRUE)
+  }
+)

@@ -21,11 +21,14 @@ bibliography: ../course.bib
 csl: ../jss.csl
 ---
 
+\newcommand\CondExpect[2]{\mathbb{E}\left[{#1}\;\middle\vert\;{#2}\right]}
+
 --------------------
 
 ```{r knitr-opts,purl=FALSE,include=FALSE}
 params <- list(prefix="ex")
 source("../_includes/setup.R", local = knitr::knit_global())
+options(pomp_archive_dir="results/ex")
 ```
 
 ### Preliminaries
@@ -42,7 +45,8 @@ if (file.exists("CLUSTER.R")) {
 }
 ```
 
-We begin by loading the packages we'll need and setting the random seed, to allow reproducibility.
+The following code chunk loads the packages we'll need, sets the random seed, and makes some stylistic choices.
+It also creates a directory to hold some of the graphics files we will be creating.
 
 ```{r prelims,cache=FALSE}
 set.seed(517218506L)
@@ -50,11 +54,8 @@ library(tidyverse)
 library(phylopomp)
 library(gifski)
 theme_set(theme_bw())
+dir.create("figs")
 ```
-
-## The Moran process
-
-@Kingman1982, @Kingman1982b, @Volz2009a, @Rasmussen2011
 
 ```{r cache=FALSE,include=FALSE,purl=FALSE}
 embed_help <- function (page, package) {
@@ -75,7 +76,34 @@ embed_help <- function (page, package) {
 }
 ```
 
+## The Moran process
+
+The earliest phylodynamics methods [@Volz2009a;@Rasmussen2011] were based on the so-called Kingman coalescent [@Kingman1982;@Kingman1982b].
+The Kingman coalescent is a stochastic process that generates genealogies.
+It is typically viewed backward in time, as a process whereby lineages coalesce at random times.
+
+In its simplest form, it has only two parameter, a population size, $n$, and a *coalescence rate*, $\mu$.
+
+Interestingly, the coalescent is related to another classical model of population genetics, the so-called *Moran process* [@Moran1958;@King2020].
+The Moran process is very easily described:
+A population of $n$ individuals experiences random events at rate $\mu$.
+At each event, a random member of the population gives birth to a new lineage.
+Simultaneously, a second random member of the population dies.
+Thus the population size remains constant.
+All the members of the population are equally likely to be selected for either of these two roles:
+they are said to be *exchangeable*.
+
+@King2020 show how one can make this connection precise.
+In particular, they show how one can simulate the Moran genealogy process.
+The simulator is implemented as part of the **phylopomp** package.
+Here is the help page relevant to the Moran genealogy process (obtained by executing `?moran` in an **R** session).
+
 `r embed_help("moran","phylopomp")`
+
+The following codes simulate the Moran genealogy process for 10 time units (the unit of time is such that $\mu=1$).
+The first call to `simulate` returns an object of class `gpsim`.
+The second line plots this object as a tree.
+Calling `simulate` again on a `gpsim` object *continues* the simulation.
 
 ```{r moran0,fig.show="hold",fig.dim=c(5,3),out.width="50%"}
 simulate("Moran",time=0,n=10,psi=0) -> m
@@ -92,6 +120,15 @@ m |> simulate("Moran",time=5) -> m
 m |> plot(prune=FALSE,points=TRUE)+expand_limits(x=5)
 ```
 
+In the plots, the black dots correspond to extant lineages.
+Green dots demarcate the coalescence events (branch points).
+Brown dots denote the *roots* of the genealogical trees.
+
+### Animating the Moran genealogy process
+
+An animation gives a better sense of the nature of the genealogy process.
+The following codes repeatedly continue and plot the simulation, storing the result as a list, `pl`, of plots.
+
 ```{r moran1,results="hide"}
 simulate("Moran",t0=0,time=0,n=10,psi=0) -> m
 times <- seq(0,10,by=0.1)
@@ -103,40 +140,50 @@ for (i in seq_along(times)) {
     expand_limits(x=10) -> pl[[i]]
 }
 ```
+In the following chunk, the sourced script defines the `animator` function.
+This constructs animations in one or more commonly used formats.
+You can view these files using a web browser or other software you have installed on your system.
+In an **Rstudio** session, you can also do `file.show("moran1.gif")` to display the animation.
 
 ```{r moran1a,results="hide"}
 source("https://kingaa.github.io/serrapilheira/phylo/animator.R")
-
-animator(plots=pl,gif_file="moran1.gif",webm=TRUE,mp4=TRUE,framerate=15)
-
-if (rstudioapi::isAvailable()) {
-  file.show("moran1.gif")
-}
+animator(plots=pl,gif_file="figs/moran1.gif",webm=TRUE,mp4=TRUE)
 ```
 
 <video style="width: 500px;" controls>
-	<source src="data:video/webm;base64,`r base64enc::base64encode("moran1.webm")`" type="video/webm"/>
-	<source src="data:video/mp4;base64,`r base64enc::base64encode("moran1.mp4")`" type="video/mp4"/>
+	<source src="data:video/webm;base64,`r base64enc::base64encode("figs/moran1.webm")`" type="video/webm"/>
+	<source src="data:video/mp4;base64,`r base64enc::base64encode("figs/moran1.mp4")`" type="video/mp4"/>
 	Your browser does not support the video element.
 </video>
 
 
+### Exercise
+
+Explore the effect of changing the population size, $n$.
+Be sure to run the simulations long enough so that the population has a unique common ancestor.
+How does this affect the time it takes for the whole population to reach this state?
+How does it affect the shape of the tree?
+
+
 ## Linear birth-death process
 
-@Stadler2010
+Another class of approaches to phylodynamic inference is based on the linear birth-death process [@Stadler2010].
+In this model, a population of $n_t$ individuals evolves according to the simplest possible demography:
+individuals give birth at rate $\lambda$ and die at rate $\mu$.
 
-```{tikz lbdp_diagram,echo=FALSE,fig.dim=c(4,4),out.width="30%"}
+```{tikz lbdp_diagram,echo=FALSE,purl=FALSE,fig.dim=c(4,4),out.width="30%"}
 \begin{tikzpicture}[scale=1]
   \usetikzlibrary{arrows.meta,positioning,calc}
   \definecolor{royalblue}{rgb}{0.263,0.431,0.933}
 
   \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+  \tikzstyle{deme}=[fill=black!20!white]
   \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
   \tikzstyle{flow}=[draw=black, very thick, >=stealth]
   \tikzstyle{obs}=[draw=royalblue, thick, >=Circle]
 
   \coordinate (origin) at (0,0);
-  \node [box] (N) at (origin) {$N$};
+  \node [box,deme] (N) at (origin) {$N$};
 
   \draw [flow,->] (N.south east) -- ($(N)+(1,-1)$) node[midway,above,sloped] {$\mu$};
   \draw [flow,->] (N.north) .. controls ($(N)+(90:2)$) and ($(N.west)+(180:2)$) .. (N.west) node[midway,above,sloped] {$\lambda$};
@@ -145,26 +192,138 @@ if (rstudioapi::isAvailable()) {
 \end{tikzpicture}
 ```
 
+Importantly, in this model, the population size is no longer constant:
+even if $\lambda=\mu$, $n_t$ will fluctuate stochastically.
+In particular, the population will go extinct with probablity 1, though if $\lambda>\mu$, it will become very large before it is extinguished, with nonzero probability.
+Indeed, the expected population size grows (or decays) exponentially in time:
+$\CondExpect{n_t}{n_0}=n_0\,e^{(\lambda-\mu)\,t}$.
+
+Following @Stadler2010, we allow for constant-rate sampling in this process.
+Specifically, each lineage is sampled at a rate $\psi$.
+These samples are indicated as blue dots in the genealogical trees.
+
+The linear birth-death genealogy process is implemented in **phylopomp**.
+Executing `?lbdp` reveals the following.
+
 `r embed_help("lbdp","phylopomp")`
 
+### Without sampling
+
+As before, we can generate animations to visualize the linear birth-death genealogy process.
+First, we show a simulation without sampling.
+In the following, the RNG seed is carefully controlled, ensuring that, in this realization, the population does not die out immediately.
+
+```{r lbdp1,results="hide",class.source="fold-hide"}
+bake(
+  seed=239863857,
+  file="lbdp1.rds",
+  {
+    simulate("LBDP",t0=0,time=0,n=1,lambda=1.8,mu=1,psi=0) -> bd
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      bd |> simulate("LBDP",time=times[i]) -> bd
+      bd |>
+        plot(prune=FALSE,points=TRUE)+
+        expand_limits(x=10) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/lbdp1.gif",webm=TRUE,mp4=TRUE)
+  }
+)
+```
+
+<video id="lbdp1" style="width: 500px;" controls>
+	<source src="data:video/webm;base64,`r base64enc::base64encode("figs/lbdp1.webm")`" type="video/webm"/>
+	<source src="data:video/mp4;base64,`r base64enc::base64encode("figs/lbdp1.mp4")`" type="video/mp4"/>
+	Your browser does not support the video element.
+</video>
+
+### With sampling
+
+Now we introduce sampling, by making $\psi>0$.
+
+```{r lbdp2,results="hide",class.source="fold-hide"}
+bake(
+  seed=1282680647,
+  file="lbdp2.rds",
+  {
+    simulate("LBDP",t0=0,time=0,n=1,lambda=1.4,mu=1,psi=0.5) -> bd
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      bd |> simulate("LBDP",time=times[i]) -> bd
+      bd |>
+        plot(prune=FALSE,points=TRUE)+
+        expand_limits(x=10) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/lbdp2.gif",webm=TRUE,mp4=TRUE)
+  }
+)
+```
+
+<video id="ldbp2" style="width: 500px;" controls>
+	<source src="data:video/webm;base64,`r base64enc::base64encode("figs/lbdp2.webm")`" type="video/webm"/>
+	<source src="data:video/mp4;base64,`r base64enc::base64encode("figs/lbdp2.mp4")`" type="video/mp4"/>
+	Your browser does not support the video element.
+</video>
+
+### The pruned linear birth-death-sampling genealogy process
+
+To *prune* the genealogy, is to discard all unsampled lineages.
+The following shows the same process as above, with pruning.
+
+```{r lbdp3,results="hide",class.source="fold-hide"}
+bake(
+  seed=1282680647,
+  file="lbdp3.rds",
+  {
+    simulate("LBDP",t0=0,time=0,n=1,lambda=1.4,mu=1,psi=0.5) -> bd
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      bd |> simulate("LBDP",time=times[i]) -> bd
+      bd |>
+        plot(prune=TRUE,points=TRUE)+
+        expand_limits(x=10) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/lbdp3.gif",webm=TRUE,mp4=TRUE)
+  }
+)
+```
+
+<video id="ldbp3" style="width: 500px;" controls>
+	<source src="data:video/webm;base64,`r base64enc::base64encode("figs/lbdp3.webm")`" type="video/webm"/>
+	<source src="data:video/mp4;base64,`r base64enc::base64encode("figs/lbdp3.mp4")`" type="video/mp4"/>
+	Your browser does not support the video element.
+</video>
+
+### Exercise
+
+A convenient feature of the linear birth-death genealogy process (and the reason for its widespread use in phylodynamic inference) is its *self-similarity*.
+Any subtree is statistically identical to any other subtree, and to the tree as a whole.
+Look for this property in snapshots of simulations.
 
 ## SIR process
 
-```{tikz sir_diagram,echo=FALSE,fig.dim=c(4,4),out.width="70%"}
+The first model that has the key features of a real disease-transmission process is the SIR genealogy process.
+This is the genealogy process induced by the simple SIR model.
+
+```{tikz sir_diagram,echo=FALSE,purl=FALSE,fig.dim=c(4,4),out.width="70%"}
 \begin{tikzpicture}[scale=1.3]
   \usetikzlibrary{arrows.meta,positioning,calc}
   \definecolor{darkgreen}{rgb}{0,0.392,0}
   \definecolor{royalblue}{rgb}{0.263,0.431,0.933}
 
   \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+  \tikzstyle{ibox}=[draw=darkgreen]
+  \tikzstyle{deme}=[fill=black!20!white]
   \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
   \tikzstyle{flow}=[draw=black, very thick, >=stealth]
   \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
   \tikzstyle{obs}=[draw=royalblue, thick, >=Circle]
-
   \coordinate (origin) at (0,0);
   \node [box] (S) at ($(origin)+(1,-1)$) {$S$};
-  \node [box] (I) at ($(S)+(2,0)$) {$I$};
+  \node [box,ibox,deme] (I) at ($(S)+(2,0)$) {$I$};
   \node [box] (R) at ($(I)+(2,0)$) {$R$};
   \coordinate (midSI) at ($(S)!0.5!(I)$);
   \coordinate (midIR) at ($(I)!0.5!(R)$);
@@ -173,24 +332,90 @@ if (rstudioapi::isAvailable()) {
   \draw [flow,->] (I) -- (R) node[midway,above,sloped] {$\gamma$};
   \draw [obs,->] (I.south) .. controls ($(I)+(0,-1)$) and ($(C)+(-1,0)$) .. (C)  node[midway,above,sloped] {$\psi$};
   \draw [modulate,->] (I.north west) .. controls ($(I)+(-0.8,0.8)$) and ($(midSI)+(0,0.5)$) .. (midSI);
-
 \end{tikzpicture}
 ```
 
+The uniformly-sampled version of this model is implemented in **phylopomp**.
+Executing `?sir` reveals the following.
+
 `r embed_help("sir","phylopomp")`
+
+### Without sampling
+
+```{r sir1,results="hide",class.source="fold-hide"}
+bake(
+  seed=1282680647,
+  file="sir1.rds",
+  {
+    simulate(
+      "SIR",t0=0,time=0,
+      S0=200,I0=3,R0=0,
+      Beta=2,gamma=1,psi=0
+    ) -> sir
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      sir |> simulate("SIR",time=times[i]) -> sir
+      sir |>
+        plot(prune=FALSE,points=TRUE)+
+        expand_limits(x=10) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/sir1.gif",webm=TRUE,mp4=TRUE)
+  }
+)
+```
+
+<video id="sir1" style="width: 500px;" controls>
+	<source src="data:video/webm;base64,`r base64enc::base64encode("figs/sir1.webm")`" type="video/webm"/>
+	<source src="data:video/mp4;base64,`r base64enc::base64encode("figs/sir1.mp4")`" type="video/mp4"/>
+	Your browser does not support the video element.
+</video>
+
+### With sampling
+
+```{r sir2,results="hide",class.source="fold-hide"}
+bake(
+  seed=1282680647,
+  file="sir2.rds",
+  {
+    simulate(
+      "SIR",t0=0,time=0,
+      S0=200,I0=3,R0=0,
+      Beta=2,gamma=1,psi=0.2
+    ) -> sir
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      sir |> simulate("SIR",time=times[i]) -> sir
+      sir |>
+        plot(prune=FALSE,points=TRUE)+
+        expand_limits(x=10) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/sir2.gif",webm=TRUE,mp4=TRUE)
+  }
+)
+```
+
+<video id="sir2" style="width: 500px;" controls>
+	<source src="data:video/webm;base64,`r base64enc::base64encode("figs/sir2.webm")`" type="video/webm"/>
+	<source src="data:video/mp4;base64,`r base64enc::base64encode("figs/sir2.mp4")`" type="video/mp4"/>
+	Your browser does not support the video element.
+</video>
 
 ## SIRS process
 
 Set $\omega>0$.
 
 
-```{tikz sirs_diagram,echo=FALSE,fig.dim=c(4,4),out.width="70%"}
+```{tikz sirs_diagram,echo=FALSE,purl=FALSE,fig.dim=c(4,4),out.width="70%"}
 \begin{tikzpicture}[scale=1.3]
   \usetikzlibrary{arrows.meta,positioning,calc}
   \definecolor{darkgreen}{rgb}{0,0.392,0}
   \definecolor{royalblue}{rgb}{0.263,0.431,0.933}
 
   \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+  \tikzstyle{ibox}=[draw=darkgreen]
+  \tikzstyle{deme}=[fill=black!20!white]
   \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
   \tikzstyle{flow}=[draw=black, very thick, >=stealth]
   \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
@@ -198,7 +423,7 @@ Set $\omega>0$.
 
   \coordinate (origin) at (0,0);
   \node [box] (S) at ($(origin)+(1,-1)$) {$S$};
-  \node [box] (I) at ($(S)+(2,0)$) {$I$};
+  \node [box,ibox,deme] (I) at ($(S)+(2,0)$) {$I$};
   \node [box] (R) at ($(I)+(2,0)$) {$R$};
   \coordinate (overR) at ($(R)+(0,1)$);
   \coordinate (overS) at ($(S)+(0,1)$);
@@ -216,13 +441,15 @@ Set $\omega>0$.
 
 ## SEIRS process
 
-```{tikz seirs_diagram,echo=FALSE,fig.dim=c(4,4),out.width="90%"}
+```{tikz seirs_diagram,echo=FALSE,purl=FALSE,fig.dim=c(4,4),out.width="90%"}
 \begin{tikzpicture}[scale=1.3]
   \usetikzlibrary{arrows.meta,positioning,calc}
   \definecolor{darkgreen}{rgb}{0,0.392,0}
   \definecolor{royalblue}{rgb}{0.263,0.431,0.933}
 
   \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+  \tikzstyle{ibox}=[draw=darkgreen]
+  \tikzstyle{deme}=[fill=black!20!white]
   \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
   \tikzstyle{flow}=[draw=black, very thick, >=stealth]
   \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
@@ -230,8 +457,8 @@ Set $\omega>0$.
 
   \coordinate (origin) at (0,0);
   \node [box] (S) at ($(origin)+(1,-1)$) {$S$};
-  \node [box] (E) at ($(S)+(2,0)$) {$E$};
-  \node [box] (I) at ($(E)+(2,0)$) {$I$};
+  \node [box,deme] (E) at ($(S)+(2,0)$) {$E$};
+  \node [box,ibox,deme] (I) at ($(E)+(2,0)$) {$I$};
   \node [box] (R) at ($(I)+(2,0)$) {$R$};
   \coordinate (overR) at ($(R)+(0,1)$);
   \coordinate (overS) at ($(S)+(0,1)$);
