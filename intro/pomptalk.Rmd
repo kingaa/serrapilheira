@@ -42,6 +42,40 @@ library(pomp)
 - Guiding policy
 - Making forecasts
 
+## Understanding and prediction
+
+- Informative studies
+- Reliable decisions
+- Robust forecasts
+
+...all rely on the models' ability to *explain* the data correctly.
+
+## Understanding and prediction
+
+- Informative studies
+- Reliable decisions
+- Robust forecasts
+
+...all rely on the models' ability to *explain* the data correctly.
+
+Understanding and prediction are two sides of the same coin.
+
+## Understanding and prediction
+
+- Informative studies
+- Reliable decisions
+- Robust forecasts
+
+...all rely on the models' ability to *explain* the data correctly.
+
+Understanding and prediction are two sides of the same coin.
+
+But *all models are wrong*.
+
+## The dialogue between scientist and Nature
+
+- We have questions about the causes of things...
+
 ## The dialogue between scientist and Nature
 
 - We have questions about the causes of things...
@@ -56,6 +90,9 @@ library(pomp)
 - Models are nothing other than hypothetical answers to questions we ask.
 - Models are necessarily *partial* answers, at best.
 
+## The dialogue between scientist and Nature
+
+- It is relatively easy to ask difficult questions.
 
 ## The dialogue between scientist and Nature
 
@@ -186,11 +223,10 @@ pl+scale_y_log10()+expand_limits(y=c(0.2,700))
 
 ## Overview
 
-1. Markov models
+1. Models as scientific instruments
 1. Examples: cholera and pertussis
 1. Partially observed Markov processes
 1. Plug and play inference methods
-1. Plug and play methods in practice
 1. Conclusions and recommendations
 
 ## Endemic cholera
