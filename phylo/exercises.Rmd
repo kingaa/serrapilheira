@@ -1,5 +1,7 @@
 ---
-title: Phylodynamics exercises
+title: |
+  Phylodynamics exercises:<br>
+  simulation of genealogy processes
 author: Aaron A. King
 output:
   html_document:
@@ -31,7 +33,10 @@ source("../_includes/setup.R", local = knitr::knit_global())
 options(pomp_archive_dir="results/ex")
 ```
 
-### Preliminaries
+## Preliminaries
+
+@Grenfell2004 showed that the shapes of genealogies of pathogen samples contain information about the processes that gave rise to them.
+In these exercises, you'll explore this idea by simulating the genealogy processes induced by various pathogen transmission models and observing their shapes.
 
 The **R** codes shown in this document are [available for download](./exercises.R).
 Save a copy of these codes for use as a template in your own work on the exercises.
@@ -75,6 +80,9 @@ embed_help <- function (page, package) {
   sprintf(r"{<iframe id="%s" class="help" src="data:text/html;base64,%s"></iframe>}",parse(text=page),dat)
 }
 ```
+
+
+----------------------------------
 
 ## The Moran process
 
@@ -130,16 +138,27 @@ An animation gives a better sense of the nature of the genealogy process.
 The following codes repeatedly continue and plot the simulation, storing the result as a list, `pl`, of plots.
 
 ```{r moran1,results="hide"}
-simulate("Moran",t0=0,time=0,n=10,psi=0) -> m
-times <- seq(0,10,by=0.1)
-pl <- vector(mode="list",length=length(times))
-for (i in seq_along(times)) {
-  m |> simulate("Moran",time=times[i]) -> m
-  m |>
-    plot(prune=FALSE,points=TRUE)+
-    expand_limits(x=10) -> pl[[i]]
-}
+bake(
+  seed=2147460505,
+  file="moran1.rds",
+  {
+    simulate("Moran",t0=0,time=0,n=10,psi=0) -> m
+    times <- seq(0,10,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      m |> simulate("Moran",time=times[i]) -> m
+      m |>
+        plot(prune=FALSE,points=TRUE)+
+        expand_limits(x=max(times)) -> pl[[i]]
+    }
+    pl
+  }
+) -> pl
 ```
+
+[What is this `bake` function?](../misc/bake.html)
+
+
 In the following chunk, the sourced script defines the `animator` function.
 This constructs animations in one or more commonly used formats.
 You can view these files using a web browser or other software you have installed on your system.
@@ -163,6 +182,9 @@ Explore the effect of changing the population size, $n$.
 Be sure to run the simulations long enough so that the population has a unique common ancestor.
 How does this affect the time it takes for the whole population to reach this state?
 How does it affect the shape of the tree?
+
+
+----------------------------------
 
 
 ## Linear birth-death process
@@ -225,7 +247,7 @@ bake(
       bd |> simulate("LBDP",time=times[i]) -> bd
       bd |>
         plot(prune=FALSE,points=TRUE)+
-        expand_limits(x=10) -> pl[[i]]
+        expand_limits(x=max(times)) -> pl[[i]]
     }
     animator(plots=pl,gif_file="figs/lbdp1.gif",webm=TRUE,mp4=TRUE)
   }
@@ -254,7 +276,7 @@ bake(
       bd |> simulate("LBDP",time=times[i]) -> bd
       bd |>
         plot(prune=FALSE,points=TRUE)+
-        expand_limits(x=10) -> pl[[i]]
+        expand_limits(x=max(times)) -> pl[[i]]
     }
     animator(plots=pl,gif_file="figs/lbdp2.gif",webm=TRUE,mp4=TRUE)
   }
@@ -284,7 +306,7 @@ bake(
       bd |> simulate("LBDP",time=times[i]) -> bd
       bd |>
         plot(prune=TRUE,points=TRUE)+
-        expand_limits(x=10) -> pl[[i]]
+        expand_limits(x=max(times)) -> pl[[i]]
     }
     animator(plots=pl,gif_file="figs/lbdp3.gif",webm=TRUE,mp4=TRUE)
   }
@@ -302,6 +324,9 @@ bake(
 A convenient feature of the linear birth-death genealogy process (and the reason for its widespread use in phylodynamic inference) is its *self-similarity*.
 Any subtree is statistically identical to any other subtree, and to the tree as a whole.
 Look for this property in snapshots of simulations.
+
+----------------------------------
+
 
 ## SIR process
 
@@ -358,7 +383,7 @@ bake(
       sir |> simulate("SIR",time=times[i]) -> sir
       sir |>
         plot(prune=FALSE,points=TRUE)+
-        expand_limits(x=10) -> pl[[i]]
+        expand_limits(x=max(times)) -> pl[[i]]
     }
     animator(plots=pl,gif_file="figs/sir1.gif",webm=TRUE,mp4=TRUE)
   }
@@ -389,7 +414,7 @@ bake(
       sir |> simulate("SIR",time=times[i]) -> sir
       sir |>
         plot(prune=FALSE,points=TRUE)+
-        expand_limits(x=10) -> pl[[i]]
+        expand_limits(x=max(times)) -> pl[[i]]
     }
     animator(plots=pl,gif_file="figs/sir2.gif",webm=TRUE,mp4=TRUE)
   }
@@ -402,9 +427,58 @@ bake(
 	Your browser does not support the video element.
 </video>
 
+### The pruned SIR process
+
+```{r sir3,results="hide",class.source="fold-hide"}
+bake(
+  seed=1282680647,
+  file="sir3.rds",
+  {
+    simulate(
+      "SIR",t0=0,time=0,
+      S0=300,I0=3,R0=0,
+      Beta=2,gamma=1,psi=0.2
+    ) -> sir
+    times <- seq(0,12,by=0.1)
+    pl <- vector(mode="list",length=length(times))
+    for (i in seq_along(times)) {
+      sir |> simulate("SIR",time=times[i]) -> sir
+      sir |>
+        plot(prune=TRUE,points=TRUE)+
+        expand_limits(x=max(times)) -> pl[[i]]
+    }
+    animator(plots=pl,gif_file="figs/sir3.gif",webm=TRUE,mp4=TRUE)
+  }
+)
+```
+
+<video id="sir3" style="width: 500px;" controls>
+	<source src="data:video/webm;base64,`r base64enc::base64encode("figs/sir3.webm")`" type="video/webm"/>
+	<source src="data:video/mp4;base64,`r base64enc::base64encode("figs/sir3.mp4")`" type="video/mp4"/>
+	Your browser does not support the video element.
+</video>
+
+### Exercise 
+
+Study the pruned SIR process by looking at the animation above in detail.
+The pruned process is Markov.
+Can you see why this is?
+
+### Exercise
+
+Perform simulations to see how the shape of the simulated trees changes as you vary the parameters.
+In particular, vary the transmission rate, $\beta$, and the recovery rate, $\gamma$, keeping the sampling rate, $\psi$ fixed.
+It will be sufficient here to examine snapshots of the genealogy process at a few fixed times.
+
+After you have performed some simulations at a few of the parameters, formulate a hypothesis about the dependence and test it with simulations in new parameter regimes.
+
+----------------------------------
+
+
 ## SIRS process
 
-Set $\omega>0$.
+If we allow immunity to be impermanent, i.e., to *wane*, then the SIR model becomes the so-called SIRS model.
+We can simulate the genealogy process induced by an SIRS population model using the SIR simulator by simply setting $\omega>0$.
 
 
 ```{tikz sirs_diagram,echo=FALSE,purl=FALSE,fig.dim=c(4,4),out.width="70%"}
@@ -439,7 +513,18 @@ Set $\omega>0$.
 \end{tikzpicture}
 ```
 
+### Exercise
+
+Perform simulations of the SIRS genealogy process and make plots (or even animations) of it.
+How do the shapes of the genealogies change when we allow for loss of immunity?
+
+----------------------------------
+
+
+
 ## SEIRS process
+
+In passing from an SIRS to an SEIRS population process, we insert an *incubation period*, reflecting the fact that some time must pass before an infection within a host develops to the point that transmission is possible.
 
 ```{tikz seirs_diagram,echo=FALSE,purl=FALSE,fig.dim=c(4,4),out.width="90%"}
 \begin{tikzpicture}[scale=1.3]
@@ -477,14 +562,115 @@ Set $\omega>0$.
 
 `r embed_help("seir","phylopomp")`
 
+### Exercise
+
+Perform simulations of the SEIR genealogy process (i.e., with $\omega=0$) and make plots (or even animations) of it.
+How do the shapes of the genealogies differ from those from the SIR genealogy process?
+
+
+### Exercise
+
+Perform simulations of the SEIRS genealogy process (i.e., with $\omega>0$) and make plots (or even animations) of it.
+How do the shapes of the genealogies differ from those from the SIRS genealogy process?
+
+
+----------------------------------
+
+
 ## Competition between two strains
 
+```{tikz siir_diagram,echo=FALSE,purl=FALSE,fig.dim=c(4,4),out.width="90%"}
+\begin{tikzpicture}[scale=1.5]
+  \usetikzlibrary{arrows.meta,positioning,calc}
+  \definecolor{darkgreen}{rgb}{0,0.392,0}
+  \definecolor{royalblue}{rgb}{0.263,0.431,0.933}
+  \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+  \tikzstyle{ibox}=[draw=darkgreen]
+  \tikzstyle{deme}=[fill=black!20!white]
+  \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+  \tikzstyle{flow}=[draw=black, very thick, >=stealth]
+  \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
+  \tikzstyle{obs}=[draw=royalblue, thick, >=Circle]
+  \coordinate (origin) at (0,0);
+  \node [box] (S) at ($(origin)+(1,-1)$) {$S$};
+  \node [box,ibox,deme] (I1) at ($(S)+(2,1)$) {$I_1$};
+  \node [box,ibox,deme] (I2) at ($(S)+(2,-1)$) {$I_2$};
+  \node [box] (R) at ($(I1)+(2,-1)$) {$R$};
+  \coordinate (overR) at ($(R)+(0,2)$);
+  \coordinate (overS) at ($(S)+(0,2)$);
+  \coordinate (midSI1) at ($(S)!0.5!(I1)$);
+  \coordinate (midSI2) at ($(S)!0.5!(I2)$);
+  \node (C1) at ($(I1)+(10:1.6)$) {$C_1$};
+  \node (C2) at ($(I2)+(-10:1.6)$) {$C_2$};
+  \draw [flow,->] (S) -- (I1) node[midway,below,sloped] {$\beta_1\,I_1/N$};
+  \draw [flow,->] (S) -- (I2) node[midway,above,sloped] {$\beta_2\,I_2/N$};
+  \draw [flow,->] (I1) -- (R) node[midway,above,sloped] {$\gamma$};
+  \draw [flow,->] (I2) -- (R) node[midway,above,sloped] {$\gamma$};
+  \draw [flow,->] (R) -- (overR) -- (overS)  node[midway,above,sloped] {$\omega$} -- (S);
+  \draw [modulate,->] (I1.north west) .. controls ($(I1)+(-0.8,0.8)$) and ($(midSI1)+(0,0.8)$) .. (midSI1);
+  \draw [modulate,->] (I2.south west) .. controls ($(I2)+(-0.8,-0.8)$) and ($(midSI2)+(0,-0.8)$) .. (midSI2);
+  \draw [obs,->] (I1.east) -- (C1) node[midway,above,sloped] {$\psi_1$};
+  \draw [obs,->] (I2.east) -- (C2) node[midway,below,sloped] {$\psi_2$};
+\end{tikzpicture}
+```
+
 `r embed_help("siir","phylopomp")`
+
+### Exercise
+
+State a hypothesis as to how the shapes of genealogies will change as you vary the $\beta_1$, $\beta_2$ parameters in this two-deme, two-strain genealogy process.
+Perform simulations and make plots or animations to test your hypothesis.
+
+
+----------------------------------
 
 
 ## A model of superspreading
 
+
+```{tikz si2r_diagram,echo=FALSE,purl=FALSE,fig.dim=c(4,4),out.width="90%"}
+\begin{tikzpicture}[scale=1.3]
+  \usetikzlibrary{arrows.meta,positioning,calc}
+  \definecolor{darkgreen}{rgb}{0,0.392,0}
+  \definecolor{royalblue}{rgb}{0.263,0.431,0.933}
+  \tikzstyle{box}=[draw=black, text=black, fill=white, very thick, minimum size=3em]
+  \tikzstyle{ibox}=[draw=darkgreen]
+  \tikzstyle{deme}=[fill=black!20!white]
+  \tikzstyle{coordinate}=[inner sep=0pt,outer sep=0pt]
+  \tikzstyle{flow}=[draw=black, very thick, >=stealth]
+  \tikzstyle{modulate}=[draw=darkgreen, >=Circle]
+  \tikzstyle{obs}=[draw=royalblue, thick, >=Circle]
+  \coordinate (origin) at (0,0);
+  \node [box] (S) at ($(origin)+(2,-1)$) {${S}$};
+  \node [box,ibox,deme] (Il) at ($(S)+(2,0)$) {${I_1}$};
+  \node [box,ibox,deme] (Ih) at ($(Il)+(0,-2)$) {${I_2}$};
+  \node [box] (R) at ($(Il)+(2,0)$) {${R}$};
+  \coordinate (overR) at ($(R)+(0,1)$);
+  \coordinate (midSI) at ($(S)!0.5!(Il)$);
+  \draw [flow,->] (S) -- (Il);
+  \draw [flow,->] (Il) .. controls ($(Il)+(-120:1)$) and ($(Ih)+(120:1)$) .. (Ih) node [midway,left] {$\sigma^{}_{12}$};
+  \draw [flow,->] (Ih) .. controls ($(Ih)+(60:1)$) and ($(Il)+(-60:1)$) .. (Il) node [midway,right] {$\sigma^{}_{21}$};
+  \draw [flow,->] (Il) -- (R) node[midway,above,sloped] {$\gamma$};
+  \draw [flow,->] (Ih.east) -- (R |- Ih.east)  node[midway,above,sloped] {$\gamma$} -- (R);
+  \draw [flow,->] (R) -- (overR) -- (S |- overR) node[midway,below,sloped] {$\omega$} -- (S);
+  \draw [modulate,->] (Il.north west) .. controls ($(Il.north west)+(150:0.5)$) and ($(midSI)+(0,0.5)$) .. (midSI);
+  \draw [modulate,->] (Ih.west) .. controls ($(Ih.west)+(180:2)$) and ($(midSI)+(0,-1)$) .. (midSI);
+\end{tikzpicture}
+```
+
 `r embed_help("si2r","phylopomp")`
+
+### Exercise
+
+State a hypothesis as to how the shapes of pruned genealogies will change as you vary the $\beta_2$ parameter in this two-deme model.
+Perform simulations and make plots or animations to test your hypothesis.
+You may find it useful to plot both obscured and unobscured pruned genealogies.
+
+### Exercise
+
+State a hypothesis as to how changing the $\sigma_{12}$ and $\sigma_{21}$ rates will affect the shapes of genealogies.
+Perform simulations and make plots or animations to test your hypothesis.
+
 
 ----------------------
 

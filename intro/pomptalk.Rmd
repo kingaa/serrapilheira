@@ -41,6 +41,7 @@ library(pomp)
 - Explaining observed patterns
 - Guiding policy
 - Making forecasts
+- Forestalling unintended consequences
 
 ## Understanding and prediction
 

@@ -1,6 +1,6 @@
 ---
 title: |
-  Simulation of genealogies
+  Phylodynamics and genealogy processes
 output:
   html_document:
     includes:
